@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_liste" android:icon="@android:drawable/ic_menu_agenda" android:title="Ma liste" />
+    <item android:id="@+id/nav_groupes" android:icon="@android:drawable/ic_menu_myplaces" android:title="Groupes" />
+    <item android:id="@+id/nav_compte" android:icon="@android:drawable/ic_menu_manage" android:title="Compte" />
+</menu>
+

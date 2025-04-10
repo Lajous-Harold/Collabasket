@@ -2,23 +2,46 @@ package com.example.collabasket;
 
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
+
+import com.example.collabasket.ui.fragments.CompteFragment;
+import com.example.collabasket.ui.fragments.GroupesFragment;
+import com.example.collabasket.ui.fragments.ListeFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
+
+        BottomNavigationView navView = findViewById(R.id.bottom_navigation);
+        navView.setOnItemSelectedListener(item -> {
+            Fragment selected = null;
+
+            int id = item.getItemId();
+            if (id == R.id.nav_liste) {
+                selected = new ListeFragment();
+            } else if (id == R.id.nav_groupes) {
+                selected = new GroupesFragment();
+            } else if (id == R.id.nav_compte) {
+                selected = new CompteFragment();
+            }
+
+            if (selected != null) {
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, selected)
+                        .commit();
+            }
+
+            return true;
         });
+
+
+        // Démarrage par défaut sur la liste
+        navView.setSelectedItemId(R.id.nav_liste);
     }
 }
