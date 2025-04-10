@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -29,7 +28,7 @@
         android:id="@+id/categorie_produit"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Catégorie + quantité"
+        android:text="Catégorie"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="@id/nom_produit"
         app:layout_constraintTop_toBottomOf="@id/nom_produit"

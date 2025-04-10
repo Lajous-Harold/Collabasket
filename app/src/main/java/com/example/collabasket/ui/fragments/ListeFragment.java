@@ -6,7 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,11 +17,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
 import com.example.collabasket.ui.adapter.ProduitAdapter;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,10 @@ public class ListeFragment extends Fragment {
     private ProduitAdapter adapter;
     private FirebaseFirestore firestore;
     private CollectionReference produitsRef;
+
+    private final String[] unitesDisponibles = new String[] {
+            "pcs", "g", "kg", "ml", "L"
+    };
 
     @Nullable
     @Override
@@ -46,7 +49,6 @@ public class ListeFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         firestore = FirebaseFirestore.getInstance();
-        firestore.setFirestoreSettings(new FirebaseFirestoreSettings.Builder().setPersistenceEnabled(true).build());
         produitsRef = firestore.collection("produits");
 
         produitsRef.addSnapshotListener((value, error) -> {
@@ -70,6 +72,13 @@ public class ListeFragment extends Fragment {
             EditText editNom = dialogView.findViewById(R.id.edit_nom);
             EditText editCategorie = dialogView.findViewById(R.id.edit_categorie);
             EditText editQuantite = dialogView.findViewById(R.id.edit_quantite);
+            Spinner spinnerUnite = dialogView.findViewById(R.id.spinner_unite);
+
+            // Remplir le Spinner avec les unités
+            ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(requireContext(),
+                    android.R.layout.simple_spinner_item, unitesDisponibles);
+            adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerUnite.setAdapter(adapterSpinner);
 
             new AlertDialog.Builder(getContext())
                     .setTitle("Ajouter un produit")
@@ -78,10 +87,17 @@ public class ListeFragment extends Fragment {
                         String nom = editNom.getText().toString().trim();
                         String categorie = editCategorie.getText().toString().trim();
                         String qteText = editQuantite.getText().toString().trim();
-                        int quantite = qteText.isEmpty() ? 1 : Integer.parseInt(qteText);
+                        String unite = spinnerUnite.getSelectedItem().toString();
+
+                        float quantite = 1;
+                        try {
+                            quantite = Float.parseFloat(qteText);
+                        } catch (NumberFormatException e) {
+                            quantite = 1;
+                        }
 
                         if (!nom.isEmpty()) {
-                            Produit produit = new Produit(nom, categorie, quantite);
+                            Produit produit = new Produit(nom, categorie, quantite, unite);
                             produitsRef.add(produit);
                         }
                     })
@@ -94,6 +110,7 @@ public class ListeFragment extends Fragment {
                     .whereEqualTo("nom", produit.nom)
                     .whereEqualTo("categorie", produit.categorie)
                     .whereEqualTo("quantite", produit.quantite)
+                    .whereEqualTo("unite", produit.unite)
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
