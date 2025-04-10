@@ -31,12 +31,13 @@ public class LoginActivity extends AppCompatActivity {
         editPassword = findViewById(R.id.edit_password);
         Button btnLogin = findViewById(R.id.btn_login);
         TextView linkRegister = findViewById(R.id.text_register);
-
         Button btnPhoneLogin = findViewById(R.id.btn_phone_login);
+
+        btnLogin.setOnClickListener(v -> loginUser());
+
         btnPhoneLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, PhoneVerificationActivity.class));
         });
-
 
         linkRegister.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
@@ -47,7 +48,6 @@ public class LoginActivity extends AppCompatActivity {
         String email = editEmail.getText().toString().trim();
         String password = editPassword.getText().toString();
 
-        // Vérification de l'email
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             editEmail.setError("Email invalide");
             return;
@@ -62,7 +62,6 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnSuccessListener(authResult -> {
                     FirebaseUser user = mAuth.getCurrentUser();
                     if (user != null && user.isEmailVerified()) {
-                        // Accès OK
                         startActivity(new Intent(this, MainActivity.class));
                         finish();
                     } else {

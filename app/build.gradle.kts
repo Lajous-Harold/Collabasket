@@ -44,5 +44,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
+
+    implementation("com.hbb20:ccp:2.7.1")
+
 }
 apply(plugin = "com.google.gms.google-services")

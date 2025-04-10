@@ -1,8 +1,8 @@
 package com.example.collabasket;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.content.Intent;
 import android.view.View;
 import android.widget.*;
 
@@ -10,8 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.FirebaseException;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.auth.*;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.hbb20.CountryCodePicker;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +22,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
     private Button btnSendCode, btnVerifyCode;
     private String verificationId;
     private FirebaseAuth mAuth;
+    private CountryCodePicker ccp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +31,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        ccp = findViewById(R.id.ccp_phone);
         editPhone = findViewById(R.id.edit_phone);
         editCode = findViewById(R.id.edit_code);
         btnSendCode = findViewById(R.id.btn_send_code);
@@ -37,13 +40,15 @@ public class PhoneVerificationActivity extends AppCompatActivity {
         editCode.setVisibility(View.GONE);
         btnVerifyCode.setVisibility(View.GONE);
 
-        // 🔧 Ligne 34 : bouton pour envoyer le code
+        // 🔹 Envoi du code
         btnSendCode.setOnClickListener(v -> {
-            String phone = editPhone.getText().toString().trim();
-            if (TextUtils.isEmpty(phone) || phone.length() < 6) {
+            String rawPhone = editPhone.getText().toString().replaceFirst("^0+", "").trim();
+            if (TextUtils.isEmpty(rawPhone) || rawPhone.length() < 6) {
                 editPhone.setError("Numéro invalide");
                 return;
             }
+
+            String phone = ccp.getSelectedCountryCodeWithPlus() + rawPhone;
 
             PhoneAuthOptions options =
                     PhoneAuthOptions.newBuilder(mAuth)
@@ -55,7 +60,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
             PhoneAuthProvider.verifyPhoneNumber(options);
         });
 
-        // 🔧 Ligne 52 : bouton pour vérifier le code
+        // 🔹 Vérification du code reçu
         btnVerifyCode.setOnClickListener(v -> {
             String code = editCode.getText().toString().trim();
             if (TextUtils.isEmpty(code)) {
@@ -67,7 +72,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
         });
     }
 
-    // 🔧 Ligne 63 : gestion Firebase
+    // 🔸 Callback Firebase
     private final PhoneAuthProvider.OnVerificationStateChangedCallbacks callbacks =
             new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
 
@@ -82,10 +87,10 @@ public class PhoneVerificationActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken token) {
+                public void onCodeSent(@NonNull String verificationId,
+                                       @NonNull PhoneAuthProvider.ForceResendingToken token) {
                     PhoneVerificationActivity.this.verificationId = verificationId;
                     Toast.makeText(PhoneVerificationActivity.this, "Code envoyé", Toast.LENGTH_SHORT).show();
-
                     editCode.setVisibility(View.VISIBLE);
                     btnVerifyCode.setVisibility(View.VISIBLE);
                 }
@@ -102,23 +107,21 @@ public class PhoneVerificationActivity extends AppCompatActivity {
                                 .get()
                                 .addOnSuccessListener(document -> {
                                     if (document.exists()) {
-                                        // ✅ Utilisateur connu
+                                        // ✅ Connexion directe
                                         startActivity(new Intent(this, MainActivity.class));
                                         finish();
                                     } else {
-                                        // ❌ Utilisateur inconnu → demander création de compte
+                                        // ❌ Pas de compte associé
                                         Toast.makeText(this, "Aucun compte lié à ce numéro. Veuillez créer un compte.", Toast.LENGTH_LONG).show();
                                         FirebaseAuth.getInstance().signOut();
                                         startActivity(new Intent(this, RegisterActivity.class));
                                         finish();
                                     }
                                 });
-
                     }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Échec : " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-
 }

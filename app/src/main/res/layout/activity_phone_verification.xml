@@ -1,14 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- CCP -->
+    <com.hbb20.CountryCodePicker
+        android:id="@+id/ccp_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:ccp_defaultNameCode="FR"
+        app:ccp_showFullName="true"
+        app:ccp_showFlag="true"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Numéro -->
     <EditText
         android:id="@+id/edit_phone"
-        android:hint="Numéro de téléphone (+33...)"
+        android:hint="Numéro (ex : 0612345678)"
         android:inputType="phone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -20,6 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp" />
 
+    <!-- Code reçu -->
     <EditText
         android:id="@+id/edit_code"
         android:hint="Code de vérification"
