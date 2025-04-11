@@ -44,11 +44,11 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
     public void onBindViewHolder(@NonNull ProduitViewHolder holder, int position) {
         Produit current = produits.get(position);
 
-        // Format affichage : "400g de riz"
+        // Format affichage : "400 g de riz"
         String quantiteFormatee = (current.quantite % 1 == 0)
                 ? String.valueOf((int) current.quantite)
                 : String.valueOf(current.quantite);
-        holder.nomTextView.setText(quantiteFormatee + current.unite + " de " + current.nom);
+        holder.nomTextView.setText(quantiteFormatee + " " + current.unite + " de " + current.nom);
 
         holder.categorieTextView.setText(current.categorie);
         holder.checkBox.setOnCheckedChangeListener(null);
@@ -63,6 +63,7 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
             holder.btnSupprimer.setVisibility(View.GONE);
         }
 
+        // Mise à jour du champ coche dans Firestore
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             current.coche = isChecked;
             notifyItemChanged(position);
@@ -72,6 +73,8 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
                     .whereEqualTo("nom", current.nom)
                     .whereEqualTo("categorie", current.categorie)
                     .whereEqualTo("quantite", current.quantite)
+                    .whereEqualTo("unite", current.unite)
+                    .whereEqualTo("userId", current.userId)
                     .get()
                     .addOnSuccessListener(snapshots -> {
                         for (QueryDocumentSnapshot doc : snapshots) {
@@ -79,7 +82,6 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
                         }
                     });
         });
-
 
         holder.btnSupprimer.setOnClickListener(v -> {
             if (suppressionListener != null) {
@@ -98,11 +100,11 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
         notifyDataSetChanged();
     }
 
-    class ProduitViewHolder extends RecyclerView.ViewHolder {
-        private TextView nomTextView;
-        private TextView categorieTextView;
-        private CheckBox checkBox;
-        private ImageButton btnSupprimer;
+    static class ProduitViewHolder extends RecyclerView.ViewHolder {
+        private final TextView nomTextView;
+        private final TextView categorieTextView;
+        private final CheckBox checkBox;
+        private final ImageButton btnSupprimer;
 
         public ProduitViewHolder(View itemView) {
             super(itemView);

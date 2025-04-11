@@ -18,9 +18,8 @@ import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
 import com.example.collabasket.ui.adapter.ProduitAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +30,12 @@ public class ListeFragment extends Fragment {
     private FirebaseFirestore firestore;
     private CollectionReference produitsRef;
 
-    private final String[] unitesDisponibles = new String[] {
-            "pcs", "g", "kg", "ml", "L"
+    private final String[] unitesDisponibles = new String[] { "pcs", "g", "kg", "ml", "L" };
+    private final String[] categoriesDisponibles = new String[] {
+            "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
+            "Épicerie sucrée", "Épicerie salée", "Boissons", "Surgelés",
+            "Produits ménagers", "Hygiène et beauté", "Bébé", "Animaux",
+            "Papeterie", "Textile", "Électronique", "Autre"
     };
 
     @Nullable
@@ -51,20 +54,24 @@ public class ListeFragment extends Fragment {
         firestore = FirebaseFirestore.getInstance();
         produitsRef = firestore.collection("produits");
 
-        produitsRef.addSnapshotListener((value, error) -> {
-            if (error != null) {
-                Log.e("FIRESTORE", "Erreur d'écoute : ", error);
-                return;
-            }
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-            List<Produit> produits = new ArrayList<>();
-            if (value != null) {
-                for (QueryDocumentSnapshot doc : value) {
-                    produits.add(doc.toObject(Produit.class));
-                }
-                adapter.setProduits(produits);
-            }
-        });
+        // ✅ Filtrer les produits par utilisateur
+        produitsRef.whereEqualTo("userId", currentUserId)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("FIRESTORE", "Erreur d'écoute : ", error);
+                        return;
+                    }
+
+                    List<Produit> produits = new ArrayList<>();
+                    if (value != null) {
+                        for (QueryDocumentSnapshot doc : value) {
+                            produits.add(doc.toObject(Produit.class));
+                        }
+                        adapter.setProduits(produits);
+                    }
+                });
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter);
         fab.setOnClickListener(v -> {
@@ -74,34 +81,13 @@ public class ListeFragment extends Fragment {
             Spinner spinnerUnite = dialogView.findViewById(R.id.spinner_unite);
             Spinner spinnerCategorie = dialogView.findViewById(R.id.spinner_categorie);
 
-            // Liste des unités
-            String[] unites = { "pcs", "g", "kg", "ml", "L" };
             ArrayAdapter<String> uniteAdapter = new ArrayAdapter<>(requireContext(),
-                    android.R.layout.simple_spinner_item, unites);
+                    android.R.layout.simple_spinner_item, unitesDisponibles);
             uniteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerUnite.setAdapter(uniteAdapter);
 
-            // Liste des catégories
-            String[] categories = {
-                    "Fruits et légumes",
-                    "Viandes et poissons",
-                    "Produits laitiers",
-                    "Boulangerie",
-                    "Épicerie sucrée",
-                    "Épicerie salée",
-                    "Boissons",
-                    "Surgelés",
-                    "Produits ménagers",
-                    "Hygiène et beauté",
-                    "Bébé",
-                    "Animaux",
-                    "Papeterie",
-                    "Textile",
-                    "Électronique",
-                    "Autre"
-            };
             ArrayAdapter<String> categorieAdapter = new ArrayAdapter<>(requireContext(),
-                    android.R.layout.simple_spinner_item, categories);
+                    android.R.layout.simple_spinner_item, categoriesDisponibles);
             categorieAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinnerCategorie.setAdapter(categorieAdapter);
 
@@ -122,7 +108,8 @@ public class ListeFragment extends Fragment {
                         }
 
                         if (!nom.isEmpty()) {
-                            Produit produit = new Produit(nom, categorie, quantite, unite);
+                            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                            Produit produit = new Produit(nom, categorie, quantite, unite, userId);
                             produitsRef.add(produit);
                         }
                     })
@@ -130,13 +117,13 @@ public class ListeFragment extends Fragment {
                     .show();
         });
 
-
         adapter.setOnSuppressionListener(produit -> {
             produitsRef
                     .whereEqualTo("nom", produit.nom)
                     .whereEqualTo("categorie", produit.categorie)
                     .whereEqualTo("quantite", produit.quantite)
                     .whereEqualTo("unite", produit.unite)
+                    .whereEqualTo("userId", currentUserId)
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
