@@ -1,6 +1,5 @@
 package com.example.collabasket.model;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +9,6 @@ public class Groupes {
     private String creatorUid;
     private List<String> memberIds;
     private List<Map<String, String>> members;
-    private List<ProduitGroupes> produits = new ArrayList<>();
 
     public Groupes() {}
 
@@ -19,7 +17,6 @@ public class Groupes {
         this.creatorUid = creatorUid;
         this.members = members;
         this.memberIds = memberIds;
-        this.produits = new ArrayList<>();
     }
 
     public String getGroupName() {
@@ -52,13 +49,5 @@ public class Groupes {
 
     public void setMembers(List<Map<String, String>> members) {
         this.members = members;
-    }
-
-    public List<ProduitGroupes> getProduits() {
-        return produits;
-    }
-
-    public void setProduits(List<ProduitGroupes> produits) {
-        this.produits = produits;
     }
 }

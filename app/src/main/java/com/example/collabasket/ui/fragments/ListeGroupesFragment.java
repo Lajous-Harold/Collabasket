@@ -20,6 +20,7 @@ import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ListeGroupesFragment extends Fragment {
 
@@ -46,7 +47,7 @@ public class ListeGroupesFragment extends Fragment {
         }
 
         TextView titre = rootView.findViewById(R.id.text_group_title);
-        titre.setText("Liste du groupe : " + groupName);
+        titre.setText(groupName);
 
         recyclerView = rootView.findViewById(R.id.recycler_produits);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -58,6 +59,95 @@ public class ListeGroupesFragment extends Fragment {
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
         fab.setOnClickListener(v -> showAddProduitDialog());
+
+        ImageButton menuButton = rootView.findViewById(R.id.button_menu_options);
+        menuButton.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(requireContext(), v);
+            popup.getMenuInflater().inflate(R.menu.menu_groupe, popup.getMenu());
+
+            popup.setOnMenuItemClickListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.menu_ajouter_membre) {
+                    // TODO : Ajouter membre
+                    Toast.makeText(getContext(), "Ajouter des membres", Toast.LENGTH_SHORT).show();
+                    return true;
+                } else if (id == R.id.menu_info_groupe) {
+                    InfoGroupeFragment infoGroupeFragment = new InfoGroupeFragment();
+                    Bundle args = new Bundle();
+                    args.putString("groupId", groupId);
+                    infoGroupeFragment.setArguments(args);
+
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, infoGroupeFragment)
+                            .addToBackStack(null)
+                            .commit();
+                    return true;
+                } else if (id == R.id.menu_quitter_groupe) {
+                    FirebaseFirestore.getInstance()
+                            .collection("groups")
+                            .document(groupId)
+                            .get()
+                            .addOnSuccessListener(snapshot -> {
+                                List<Map<String, Object>> members = (List<Map<String, Object>>) snapshot.get("members");
+                                List<String> memberIds = (List<String>) snapshot.get("memberIds");
+
+                                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                final String[] currentRole = { "Membre" };
+
+                                for (Map<String, Object> membre : members) {
+                                    if (currentUid.equals(membre.get("userId"))) {
+                                        currentRole[0] = membre.get("role") != null ? membre.get("role").toString() : "Membre";
+                                        break;
+                                    }
+                                }
+
+                                new AlertDialog.Builder(getContext())
+                                        .setTitle("Quitter le groupe")
+                                        .setMessage(currentRole[0].equals("Propriétaire")
+                                                ? "Vous êtes le Propriétaire. En quittant, le groupe sera supprimé pour tous. Confirmez-vous ?"
+                                                : "Souhaitez-vous vraiment quitter ce groupe ?")
+                                        .setPositiveButton("Oui", (dialog, which) -> {
+                                            if (currentRole[0].equals("Propriétaire")) {
+                                                FirebaseFirestore.getInstance()
+                                                        .collection("groups")
+                                                        .document(groupId)
+                                                        .delete()
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Toast.makeText(getContext(), "Groupe supprimé", Toast.LENGTH_SHORT).show();
+                                                            requireActivity().getSupportFragmentManager()
+                                                                    .beginTransaction()
+                                                                    .replace(R.id.fragment_container, new GroupesFragment())
+                                                                    .commit();
+                                                        });
+                                            } else {
+                                                members.removeIf(m -> currentUid.equals(m.get("userId")));
+                                                memberIds.removeIf(id1 -> id1.equals(currentUid));
+
+                                                FirebaseFirestore.getInstance()
+                                                        .collection("groups")
+                                                        .document(groupId)
+                                                        .update("members", members, "memberIds", memberIds)
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Toast.makeText(getContext(), "Vous avez quitté le groupe", Toast.LENGTH_SHORT).show();
+                                                            requireActivity().getSupportFragmentManager()
+                                                                    .beginTransaction()
+                                                                    .replace(R.id.fragment_container, new GroupesFragment())
+                                                                    .commit();
+                                                        });
+                                            }
+                                        })
+                                        .setNegativeButton("Annuler", null)
+                                        .show();
+                            });
+                    return true;
+                }
+                return false;
+            });
+
+            popup.show();
+        });
+
 
         return rootView;
     }

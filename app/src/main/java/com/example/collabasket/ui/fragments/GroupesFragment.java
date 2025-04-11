@@ -100,7 +100,6 @@ public class GroupesFragment extends Fragment {
     }
 
     private void showCreateGroupDialog() {
-        // Utilisation d'un Fragment ou d'un Dialog existant pour la création de groupe
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_create_groupes, null);
         EditText groupNameInput = dialogView.findViewById(R.id.text_group_title);
 
@@ -110,33 +109,38 @@ public class GroupesFragment extends Fragment {
                 .setPositiveButton("Créer", (dialog, which) -> {
                     String groupName = groupNameInput.getText().toString().trim();
 
-                    // Vérifier que le nom du groupe n'est pas vide
                     if (!groupName.isEmpty()) {
                         String userId = mAuth.getCurrentUser().getUid();
+                        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
-                        // Créer la liste des membres avec l'utilisateur actuel
-                        List<Map<String, String>> members = new ArrayList<>();
-                        Map<String, String> user = new HashMap<>();
-                        user.put("userId", userId);
-                        user.put("userName", mAuth.getCurrentUser().getDisplayName());
-                        members.add(user);  // Ajouter l'utilisateur actuel comme membre
+                        firestore.collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    // Construction des membres
+                                    List<Map<String, String>> members = new ArrayList<>();
+                                    Map<String, String> user = new HashMap<>();
+                                    user.put("userId", userId);
+                                    user.put("userName", documentSnapshot.getString("username"));
+                                    user.put("numero", documentSnapshot.getString("phone"));
+                                    user.put("role", "Propriétaire");
 
-                        // Créer la liste des IDs des membres
-                        List<String> memberIds = new ArrayList<>();
-                        memberIds.add(userId); // Ajouter l'utilisateur en tant que membre du groupe
+                                    members.add(user);
 
-                        // Créer le groupe avec toutes les informations
-                        Groupes newGroup = new Groupes(groupName, userId, members, memberIds);
+                                    List<String> memberIds = new ArrayList<>();
+                                    memberIds.add(userId);
 
-                        firestore.collection("groups")
-                                .add(newGroup)
-                                .addOnSuccessListener(documentReference -> {
-                                    // Le groupe a été ajouté avec succès
-                                    Toast.makeText(getContext(), "Groupe créé avec succès", Toast.LENGTH_SHORT).show();
-                                    loadUserGroups(); // Recharger la liste des groupes
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(getContext(), "Erreur lors de la création du groupe", Toast.LENGTH_SHORT).show();
+                                    Groupes newGroup = new Groupes(groupName, userId, members, memberIds);
+
+                                    firestore.collection("groups")
+                                            .add(newGroup)
+                                            .addOnSuccessListener(documentReference -> {
+                                                Toast.makeText(getContext(), "Groupe créé avec succès", Toast.LENGTH_SHORT).show();
+                                                loadUserGroups();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(getContext(), "Erreur lors de la création du groupe", Toast.LENGTH_SHORT).show();
+                                            });
                                 });
                     } else {
                         Toast.makeText(getContext(), "Le nom du groupe ne peut pas être vide", Toast.LENGTH_SHORT).show();
@@ -145,5 +149,4 @@ public class GroupesFragment extends Fragment {
                 .setNegativeButton("Annuler", null)
                 .show();
     }
-
 }
