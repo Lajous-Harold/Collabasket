@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +66,20 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             current.coche = isChecked;
             notifyItemChanged(position);
+
+            FirebaseFirestore.getInstance()
+                    .collection("produits")
+                    .whereEqualTo("nom", current.nom)
+                    .whereEqualTo("categorie", current.categorie)
+                    .whereEqualTo("quantite", current.quantite)
+                    .get()
+                    .addOnSuccessListener(snapshots -> {
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            doc.getReference().update("coche", isChecked);
+                        }
+                    });
         });
+
 
         holder.btnSupprimer.setOnClickListener(v -> {
             if (suppressionListener != null) {
