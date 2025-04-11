@@ -18,9 +18,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         BottomNavigationView navView = findViewById(R.id.bottom_navigation);
+
+        // Gestion de la navigation par le BottomNavigationView
         navView.setOnItemSelectedListener(item -> {
             Fragment selected = null;
 
+            // Vérifier quel item est sélectionné
             int id = item.getItemId();
             if (id == R.id.nav_liste) {
                 selected = new ListeFragment();
@@ -30,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
                 selected = new CompteFragment();
             }
 
+            // Remplacer le fragment si nécessaire
             if (selected != null) {
                 getSupportFragmentManager()
                         .beginTransaction()
@@ -40,8 +44,9 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-
-        // Démarrage par défaut sur la liste
-        navView.setSelectedItemId(R.id.nav_liste);
+        // Démarrage avec le fragment par défaut (ListeFragment)
+        if (savedInstanceState == null) {
+            navView.setSelectedItemId(R.id.nav_liste);
+        }
     }
 }

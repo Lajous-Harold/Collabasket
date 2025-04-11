@@ -7,16 +7,18 @@ public class Groupes {
 
     private String groupName;
     private String creatorUid;
-    private List<Map<String, String>> members;  // Liste des membres avec rôle
+    private List<Map<String, String>> members; // liste des membres avec uid + role
+    private List<String> memberIds;            // liste des UID en clair
 
     public Groupes() {
-        // Constructeur par défaut requis pour Firebase
+        // Requis pour Firebase
     }
 
-    public Groupes(String groupName, String creatorUid, List<Map<String, String>> members) {
+    public Groupes(String groupName, String creatorUid, List<Map<String, String>> members, List<String> memberIds) {
         this.groupName = groupName;
         this.creatorUid = creatorUid;
         this.members = members;
+        this.memberIds = memberIds;
     }
 
     public String getGroupName() {
@@ -41,5 +43,13 @@ public class Groupes {
 
     public void setMembers(List<Map<String, String>> members) {
         this.members = members;
+    }
+
+    public List<String> getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(List<String> memberIds) {
+        this.memberIds = memberIds;
     }
 }

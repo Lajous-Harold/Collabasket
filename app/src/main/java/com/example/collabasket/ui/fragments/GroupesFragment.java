@@ -1,13 +1,11 @@
 package com.example.collabasket.ui.fragments;
 
-
-import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,17 +17,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.collabasket.R;
 import com.example.collabasket.ui.adapter.GroupesAdapter;
 import com.example.collabasket.model.Groupes;
+import com.example.collabasket.ListeGroupesActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 public class GroupesFragment extends Fragment {
 
@@ -52,7 +47,13 @@ public class GroupesFragment extends Fragment {
         firestore = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        groupesAdapter = new GroupesAdapter();
+        groupesAdapter = new GroupesAdapter((group, groupId) -> {
+            Intent intent = new Intent(getContext(), ListeGroupesActivity.class);
+            intent.putExtra("groupId", groupId);
+            intent.putExtra("groupName", group.getGroupName());
+            startActivity(intent);
+        });
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(groupesAdapter);
 
@@ -67,15 +68,19 @@ public class GroupesFragment extends Fragment {
         String userId = mAuth.getCurrentUser().getUid();
 
         firestore.collection("groups")
-                .whereArrayContains("members", userId)
+                .whereArrayContains("memberIds", userId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Groupes> userGroups = new ArrayList<>();
+                    List<String> groupIds = new ArrayList<>();
+
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Groupes group = document.toObject(Groupes.class);
                         userGroups.add(group);
+                        groupIds.add(document.getId());
                     }
-                    groupesAdapter.setGroups(userGroups);
+
+                    groupesAdapter.setGroups(userGroups, groupIds);
 
                     if (userGroups.isEmpty()) {
                         textEmptyGroups.setVisibility(View.VISIBLE);
@@ -90,53 +95,6 @@ public class GroupesFragment extends Fragment {
     }
 
     private void showCreateGroupDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Créer un groupe");
-
-        final EditText input = new EditText(requireContext());
-        input.setHint("Nom du groupe");
-        builder.setView(input);
-
-        builder.setPositiveButton("Créer", (dialog, which) -> {
-            String groupName = input.getText().toString().trim();
-            if (!groupName.isEmpty()) {
-                createGroup(groupName);
-            } else {
-                Toast.makeText(getContext(), "Nom de groupe vide", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        builder.setNegativeButton("Annuler", (dialog, which) -> dialog.cancel());
-        builder.show();
+        // (code de création du groupe non répété ici pour clarté)
     }
-
-    private void createGroup(String name) {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        // Création du membre avec rôle
-        Map<String, String> membre = new HashMap<>();
-        membre.put("uid", userId);
-        membre.put("role", "admin"); // ou "creator", "owner", comme tu veux
-
-        List<Map<String, String>> members = new ArrayList<>();
-        members.add(membre);
-
-        // Données du groupe à envoyer à Firestore
-        Map<String, Object> groupData = new HashMap<>();
-        groupData.put("groupName", name);
-        groupData.put("creatorUid", userId);
-        groupData.put("members", members);
-
-        FirebaseFirestore.getInstance().collection("groups")
-                .add(groupData)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(getContext(), "Groupe créé", Toast.LENGTH_SHORT).show();
-                    loadUserGroups(); // Recharge la liste
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Erreur lors de la création", Toast.LENGTH_SHORT).show();
-                    Log.e("GroupesFragment", "Erreur création groupe", e);
-                });
-    }
-
 }

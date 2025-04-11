@@ -5,14 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Liste des produits -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_produits"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="8dp" />
 
-    <!-- Bouton flottant "Ajouter" en bas à droite au-dessus du BottomNavigationView -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_ajouter"
         android:layout_width="wrap_content"
