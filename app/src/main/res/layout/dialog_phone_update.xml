@@ -1,0 +1,24 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <com.hbb20.CountryCodePicker
+        android:id="@+id/ccp_new_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:ccp_defaultNameCode="FR"
+        app:ccp_showFullName="true"
+        app:ccp_showFlag="true" />
+
+    <EditText
+        android:id="@+id/edit_new_phone"
+        android:hint="612345678"
+        android:inputType="phone"
+        android:layout_marginStart="12dp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" />
+</LinearLayout>
