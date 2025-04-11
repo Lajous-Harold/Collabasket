@@ -1,26 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- CCP -->
     <com.hbb20.CountryCodePicker
         android:id="@+id/ccp_phone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:ccp_defaultNameCode="FR"
         app:ccp_showFullName="true"
-        app:ccp_showFlag="true"
-        android:layout_marginBottom="8dp" />
+        app:ccp_showFlag="true" />
 
-    <!-- Numéro -->
     <EditText
         android:id="@+id/edit_phone"
-        android:hint="Numéro (ex : 0612345678)"
+        android:hint="Numéro de téléphone"
         android:inputType="phone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
@@ -30,30 +25,26 @@
         android:text="Envoyer le code"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="12dp" />
 
-    <!-- Code reçu -->
     <EditText
         android:id="@+id/edit_code"
         android:hint="Code de vérification"
         android:inputType="number"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/btn_verify_code"
-        android:text="Vérifier et se connecter"
+        android:text="Vérifier et continuer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btn_back"
+        android:text="← Retour"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" />
-
-    <!-- Retour vers login -->
-    <TextView
-        android:id="@+id/text_back_to_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="← Retour à la connexion"
-        android:textColor="@android:color/holo_blue_dark"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="20dp" />
 </LinearLayout>

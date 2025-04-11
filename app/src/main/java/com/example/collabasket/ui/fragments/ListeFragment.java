@@ -70,24 +70,49 @@ public class ListeFragment extends Fragment {
         fab.setOnClickListener(v -> {
             View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_ajout_produit, null);
             EditText editNom = dialogView.findViewById(R.id.edit_nom);
-            EditText editCategorie = dialogView.findViewById(R.id.edit_categorie);
             EditText editQuantite = dialogView.findViewById(R.id.edit_quantite);
             Spinner spinnerUnite = dialogView.findViewById(R.id.spinner_unite);
+            Spinner spinnerCategorie = dialogView.findViewById(R.id.spinner_categorie);
 
-            // Remplir le Spinner avec les unités
-            ArrayAdapter<String> adapterSpinner = new ArrayAdapter<>(requireContext(),
-                    android.R.layout.simple_spinner_item, unitesDisponibles);
-            adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerUnite.setAdapter(adapterSpinner);
+            // Liste des unités
+            String[] unites = { "pcs", "g", "kg", "ml", "L" };
+            ArrayAdapter<String> uniteAdapter = new ArrayAdapter<>(requireContext(),
+                    android.R.layout.simple_spinner_item, unites);
+            uniteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerUnite.setAdapter(uniteAdapter);
+
+            // Liste des catégories
+            String[] categories = {
+                    "Fruits et légumes",
+                    "Viandes et poissons",
+                    "Produits laitiers",
+                    "Boulangerie",
+                    "Épicerie sucrée",
+                    "Épicerie salée",
+                    "Boissons",
+                    "Surgelés",
+                    "Produits ménagers",
+                    "Hygiène et beauté",
+                    "Bébé",
+                    "Animaux",
+                    "Papeterie",
+                    "Textile",
+                    "Électronique",
+                    "Autre"
+            };
+            ArrayAdapter<String> categorieAdapter = new ArrayAdapter<>(requireContext(),
+                    android.R.layout.simple_spinner_item, categories);
+            categorieAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinnerCategorie.setAdapter(categorieAdapter);
 
             new AlertDialog.Builder(getContext())
                     .setTitle("Ajouter un produit")
                     .setView(dialogView)
                     .setPositiveButton("Ajouter", (dialog, which) -> {
                         String nom = editNom.getText().toString().trim();
-                        String categorie = editCategorie.getText().toString().trim();
                         String qteText = editQuantite.getText().toString().trim();
                         String unite = spinnerUnite.getSelectedItem().toString();
+                        String categorie = spinnerCategorie.getSelectedItem().toString();
 
                         float quantite = 1;
                         try {
@@ -104,6 +129,7 @@ public class ListeFragment extends Fragment {
                     .setNegativeButton("Annuler", null)
                     .show();
         });
+
 
         adapter.setOnSuppressionListener(produit -> {
             produitsRef

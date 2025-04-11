@@ -26,6 +26,9 @@
         <activity android:name=".RegisterActivity" />
         <activity android:name=".MainActivity" />
         <activity android:name=".PhoneVerificationActivity" />
+        <activity android:name=".PhoneRegistrationActivity" />
+        <activity android:name=".CompleteRegistrationActivity" />
+
 
     </application>
 

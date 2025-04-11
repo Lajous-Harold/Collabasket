@@ -30,8 +30,8 @@ public class LoginActivity extends AppCompatActivity {
         editEmail = findViewById(R.id.edit_email);
         editPassword = findViewById(R.id.edit_password);
         Button btnLogin = findViewById(R.id.btn_login);
-        TextView linkRegister = findViewById(R.id.text_register);
         Button btnPhoneLogin = findViewById(R.id.btn_phone_login);
+        TextView textRegister = findViewById(R.id.text_register);
 
         btnLogin.setOnClickListener(v -> loginUser());
 
@@ -39,8 +39,8 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(new Intent(this, PhoneVerificationActivity.class));
         });
 
-        linkRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
+        textRegister.setOnClickListener(v -> {
+            startActivity(new Intent(this, PhoneRegistrationActivity.class));
         });
     }
 

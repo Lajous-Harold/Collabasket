@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp">
@@ -24,21 +22,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <com.hbb20.CountryCodePicker
-            android:id="@+id/ccp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:ccp_defaultNameCode="FR"
-            app:ccp_showFullName="true"
-            app:ccp_showFlag="true" />
-
-        <EditText
-            android:id="@+id/edit_phone"
-            android:hint="Numéro (ex : 0612345678)"
-            android:inputType="phone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
         <EditText
             android:id="@+id/edit_password"
             android:hint="Mot de passe"
@@ -53,34 +36,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <!-- Ajout pour vérification téléphone -->
-        <EditText
-            android:id="@+id/edit_code"
-            android:hint="Code SMS"
-            android:inputType="number"
+        <Button
+            android:id="@+id/btn_complete_registration"
+            android:text="Finaliser l'inscription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp" />
 
         <Button
-            android:id="@+id/btn_verify_code"
-            android:text="Valider le numéro"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <Button
-            android:id="@+id/btn_register"
-            android:text="S'inscrire"
+            android:id="@+id/btn_back"
+            android:text="← Retour"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
-
-        <TextView
-            android:id="@+id/text_login"
-            android:text="Déjà inscrit ? Se connecter"
-            android:textColor="@android:color/holo_blue_dark"
-            android:layout_marginTop="16dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_marginTop="12dp" />
     </LinearLayout>
 </ScrollView>

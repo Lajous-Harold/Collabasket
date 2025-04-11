@@ -41,8 +41,14 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
     @Override
     public void onBindViewHolder(@NonNull ProduitViewHolder holder, int position) {
         Produit current = produits.get(position);
-        holder.nomTextView.setText(current.nom);
-        holder.categorieTextView.setText(current.categorie + " — x" + current.quantite);
+
+        // Format affichage : "400g de riz"
+        String quantiteFormatee = (current.quantite % 1 == 0)
+                ? String.valueOf((int) current.quantite)
+                : String.valueOf(current.quantite);
+        holder.nomTextView.setText(quantiteFormatee + current.unite + " de " + current.nom);
+
+        holder.categorieTextView.setText(current.categorie);
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(current.coche);
 
