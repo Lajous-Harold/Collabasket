@@ -17,13 +17,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Référence au BottomNavigationView
         BottomNavigationView navView = findViewById(R.id.bottom_navigation);
 
-        // Gestion de la navigation par le BottomNavigationView
+        // Gérer la navigation entre les fragments
         navView.setOnItemSelectedListener(item -> {
             Fragment selected = null;
 
-            // Vérifier quel item est sélectionné
             int id = item.getItemId();
             if (id == R.id.nav_liste) {
                 selected = new ListeFragment();
@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
                 selected = new CompteFragment();
             }
 
-            // Remplacer le fragment si nécessaire
+            // Remplacer le fragment actuel dans le conteneur
             if (selected != null) {
                 getSupportFragmentManager()
                         .beginTransaction()

@@ -1,13 +1,11 @@
 package com.example.collabasket.ui.fragments;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -17,14 +15,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.collabasket.R;
 import com.example.collabasket.ui.adapter.GroupesAdapter;
 import com.example.collabasket.model.Groupes;
-import com.example.collabasket.ListeGroupesActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GroupesFragment extends Fragment {
 
@@ -42,16 +41,22 @@ public class GroupesFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recycler_view_groups);
         textEmptyGroups = view.findViewById(R.id.text_empty_groups);
-        fabAddGroup = view.findViewById(R.id.fab_add_group);
+        fabAddGroup = view.findViewById(R.id.fab_add_groupes);
 
         firestore = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
         groupesAdapter = new GroupesAdapter((group, groupId) -> {
-            Intent intent = new Intent(getContext(), ListeGroupesActivity.class);
-            intent.putExtra("groupId", groupId);
-            intent.putExtra("groupName", group.getGroupName());
-            startActivity(intent);
+            // Lorsque l'utilisateur clique sur un groupe, on le redirige
+            ListeGroupesFragment listeGroupesFragment = new ListeGroupesFragment();
+            Bundle args = new Bundle();
+            args.putString("groupId", groupId);
+            args.putString("groupName", group.getGroupName());
+            listeGroupesFragment.setArguments(args);
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, listeGroupesFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -95,6 +100,50 @@ public class GroupesFragment extends Fragment {
     }
 
     private void showCreateGroupDialog() {
-        // (code de création du groupe non répété ici pour clarté)
+        // Utilisation d'un Fragment ou d'un Dialog existant pour la création de groupe
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_create_groupes, null);
+        EditText groupNameInput = dialogView.findViewById(R.id.text_group_title);
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Créer un groupe")
+                .setView(dialogView)
+                .setPositiveButton("Créer", (dialog, which) -> {
+                    String groupName = groupNameInput.getText().toString().trim();
+
+                    // Vérifier que le nom du groupe n'est pas vide
+                    if (!groupName.isEmpty()) {
+                        String userId = mAuth.getCurrentUser().getUid();
+
+                        // Créer la liste des membres avec l'utilisateur actuel
+                        List<Map<String, String>> members = new ArrayList<>();
+                        Map<String, String> user = new HashMap<>();
+                        user.put("userId", userId);
+                        user.put("userName", mAuth.getCurrentUser().getDisplayName());
+                        members.add(user);  // Ajouter l'utilisateur actuel comme membre
+
+                        // Créer la liste des IDs des membres
+                        List<String> memberIds = new ArrayList<>();
+                        memberIds.add(userId); // Ajouter l'utilisateur en tant que membre du groupe
+
+                        // Créer le groupe avec toutes les informations
+                        Groupes newGroup = new Groupes(groupName, userId, members, memberIds);
+
+                        firestore.collection("groups")
+                                .add(newGroup)
+                                .addOnSuccessListener(documentReference -> {
+                                    // Le groupe a été ajouté avec succès
+                                    Toast.makeText(getContext(), "Groupe créé avec succès", Toast.LENGTH_SHORT).show();
+                                    loadUserGroups(); // Recharger la liste des groupes
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(getContext(), "Erreur lors de la création du groupe", Toast.LENGTH_SHORT).show();
+                                });
+                    } else {
+                        Toast.makeText(getContext(), "Le nom du groupe ne peut pas être vide", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
     }
+
 }

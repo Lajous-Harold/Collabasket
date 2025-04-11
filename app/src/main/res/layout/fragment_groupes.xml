@@ -1,3 +1,8 @@
+<!--
+Classe associée : GroupesFragment
+Utilité : Affiche la liste des groupes de l'utilisateur, permet la création de groupes.
+-->
+
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -30,7 +35,7 @@
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add_group"
+        android:id="@+id/fab_add_groupes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"

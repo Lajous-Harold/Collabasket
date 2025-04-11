@@ -1,17 +1,15 @@
 package com.example.collabasket.model;
 
 public class ProduitGroupes {
-
     private String nom;
     private String categorie;
     private float quantite;
     private String unite;
     private String groupId;
     private String ajoutePar;
+    private boolean coche;
 
-    public ProduitGroupes() {
-        // Constructeur requis pour Firestore
-    }
+    public ProduitGroupes() {}
 
     public ProduitGroupes(String nom, String categorie, float quantite, String unite, String groupId, String ajoutePar) {
         this.nom = nom;
@@ -20,6 +18,7 @@ public class ProduitGroupes {
         this.unite = unite;
         this.groupId = groupId;
         this.ajoutePar = ajoutePar;
+        this.coche = false;
     }
 
     public String getNom() {
@@ -68,5 +67,13 @@ public class ProduitGroupes {
 
     public void setAjoutePar(String ajoutePar) {
         this.ajoutePar = ajoutePar;
+    }
+
+    public boolean isCoche() {
+        return coche;
+    }
+
+    public void setCoche(boolean coche) {
+        this.coche = coche;
     }
 }

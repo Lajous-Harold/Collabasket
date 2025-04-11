@@ -1,3 +1,8 @@
+<!--
+Utilité : Boîte de dialogue pour modifier le numéro de téléphone de l'utilisateur.
+Appelée depuis : CompteFragment.
+-->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"

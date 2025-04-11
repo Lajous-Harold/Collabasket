@@ -1,3 +1,8 @@
+<!--
+Utilité : Boîte de dialogue pour ajouter un produit à la liste personnelle.
+Appelée depuis : ListeFragment (probablement via un bouton "ajouter produit").
+-->
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:padding="16dp"

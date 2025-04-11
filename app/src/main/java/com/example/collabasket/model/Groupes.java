@@ -1,5 +1,6 @@
 package com.example.collabasket.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -7,18 +8,18 @@ public class Groupes {
 
     private String groupName;
     private String creatorUid;
-    private List<Map<String, String>> members; // liste des membres avec uid + role
-    private List<String> memberIds;            // liste des UID en clair
+    private List<String> memberIds;
+    private List<Map<String, String>> members;
+    private List<ProduitGroupes> produits = new ArrayList<>();
 
-    public Groupes() {
-        // Requis pour Firebase
-    }
+    public Groupes() {}
 
     public Groupes(String groupName, String creatorUid, List<Map<String, String>> members, List<String> memberIds) {
         this.groupName = groupName;
         this.creatorUid = creatorUid;
         this.members = members;
         this.memberIds = memberIds;
+        this.produits = new ArrayList<>();
     }
 
     public String getGroupName() {
@@ -37,6 +38,14 @@ public class Groupes {
         this.creatorUid = creatorUid;
     }
 
+    public List<String> getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(List<String> memberIds) {
+        this.memberIds = memberIds;
+    }
+
     public List<Map<String, String>> getMembers() {
         return members;
     }
@@ -45,11 +54,11 @@ public class Groupes {
         this.members = members;
     }
 
-    public List<String> getMemberIds() {
-        return memberIds;
+    public List<ProduitGroupes> getProduits() {
+        return produits;
     }
 
-    public void setMemberIds(List<String> memberIds) {
-        this.memberIds = memberIds;
+    public void setProduits(List<ProduitGroupes> produits) {
+        this.produits = produits;
     }
 }
