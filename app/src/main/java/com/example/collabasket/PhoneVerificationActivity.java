@@ -70,6 +70,9 @@ public class PhoneVerificationActivity extends AppCompatActivity {
             PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
             signInWithPhoneAuthCredential(credential);
         });
+
+        ImageButton btnRetour = findViewById(R.id.btn_retour);
+        btnRetour.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
     }
 
     // 🔸 Callback Firebase

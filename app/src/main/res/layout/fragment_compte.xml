@@ -60,5 +60,15 @@ Utilité : Affiche et permet la modification des informations du compte utilisat
             android:layout_marginTop="32dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Déconnexion"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:textColor="@android:color/white" />
+
     </LinearLayout>
 </ScrollView>
