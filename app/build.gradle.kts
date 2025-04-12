@@ -46,6 +46,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
 
     implementation("com.hbb20:ccp:2.7.1")
+    implementation ("com.google.firebase:firebase-dynamic-links:20.1.0")
+
 
 }
 apply(plugin = "com.google.gms.google-services")

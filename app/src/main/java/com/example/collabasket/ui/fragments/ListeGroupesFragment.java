@@ -1,7 +1,12 @@
 package com.example.collabasket.ui.fragments;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,10 +17,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
+import com.example.collabasket.model.Contact;
 import com.example.collabasket.model.ProduitGroupes;
 import com.example.collabasket.ui.adapter.ProduitGroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
@@ -28,9 +35,10 @@ public class ListeGroupesFragment extends Fragment {
     private FirebaseFirestore firestore;
     private ProduitGroupesAdapter produitAdapter;
     private RecyclerView recyclerView;
+    private List<Contact> contactsList = new ArrayList<>();
 
-    private final String[] unitesDisponibles = new String[] { "pcs", "g", "kg", "ml", "L" };
-    private final String[] categoriesDisponibles = new String[] {
+    private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
+    private final String[] categoriesDisponibles = {
             "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
             "Épicerie sucrée", "Épicerie salée", "Boissons", "Surgelés",
             "Produits ménagers", "Hygiène et beauté", "Bébé", "Animaux",
@@ -49,13 +57,15 @@ public class ListeGroupesFragment extends Fragment {
         TextView titre = rootView.findViewById(R.id.text_group_title);
         titre.setText(groupName);
 
+        firestore = FirebaseFirestore.getInstance();
+
         recyclerView = rootView.findViewById(R.id.recycler_produits);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         produitAdapter = new ProduitGroupesAdapter(groupId);
         recyclerView.setAdapter(produitAdapter);
 
-        firestore = FirebaseFirestore.getInstance();
         loadProduitsForGroup();
+        loadContacts(); // ✅ nouvelle ligne ici
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
         fab.setOnClickListener(v -> showAddProduitDialog());
@@ -67,16 +77,15 @@ public class ListeGroupesFragment extends Fragment {
 
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
+
                 if (id == R.id.menu_ajouter_membre) {
-                    // TODO : Ajouter membre
-                    Toast.makeText(getContext(), "Ajouter des membres", Toast.LENGTH_SHORT).show();
+                    showContactInviteDialog();
                     return true;
                 } else if (id == R.id.menu_info_groupe) {
                     InfoGroupeFragment infoGroupeFragment = new InfoGroupeFragment();
                     Bundle args = new Bundle();
                     args.putString("groupId", groupId);
                     infoGroupeFragment.setArguments(args);
-
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.fragment_container, infoGroupeFragment)
@@ -84,62 +93,7 @@ public class ListeGroupesFragment extends Fragment {
                             .commit();
                     return true;
                 } else if (id == R.id.menu_quitter_groupe) {
-                    FirebaseFirestore.getInstance()
-                            .collection("groups")
-                            .document(groupId)
-                            .get()
-                            .addOnSuccessListener(snapshot -> {
-                                List<Map<String, Object>> members = (List<Map<String, Object>>) snapshot.get("members");
-                                List<String> memberIds = (List<String>) snapshot.get("memberIds");
-
-                                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                                final String[] currentRole = { "Membre" };
-
-                                for (Map<String, Object> membre : members) {
-                                    if (currentUid.equals(membre.get("userId"))) {
-                                        currentRole[0] = membre.get("role") != null ? membre.get("role").toString() : "Membre";
-                                        break;
-                                    }
-                                }
-
-                                new AlertDialog.Builder(getContext())
-                                        .setTitle("Quitter le groupe")
-                                        .setMessage(currentRole[0].equals("Propriétaire")
-                                                ? "Vous êtes le Propriétaire. En quittant, le groupe sera supprimé pour tous. Confirmez-vous ?"
-                                                : "Souhaitez-vous vraiment quitter ce groupe ?")
-                                        .setPositiveButton("Oui", (dialog, which) -> {
-                                            if (currentRole[0].equals("Propriétaire")) {
-                                                FirebaseFirestore.getInstance()
-                                                        .collection("groups")
-                                                        .document(groupId)
-                                                        .delete()
-                                                        .addOnSuccessListener(aVoid -> {
-                                                            Toast.makeText(getContext(), "Groupe supprimé", Toast.LENGTH_SHORT).show();
-                                                            requireActivity().getSupportFragmentManager()
-                                                                    .beginTransaction()
-                                                                    .replace(R.id.fragment_container, new GroupesFragment())
-                                                                    .commit();
-                                                        });
-                                            } else {
-                                                members.removeIf(m -> currentUid.equals(m.get("userId")));
-                                                memberIds.removeIf(id1 -> id1.equals(currentUid));
-
-                                                FirebaseFirestore.getInstance()
-                                                        .collection("groups")
-                                                        .document(groupId)
-                                                        .update("members", members, "memberIds", memberIds)
-                                                        .addOnSuccessListener(aVoid -> {
-                                                            Toast.makeText(getContext(), "Vous avez quitté le groupe", Toast.LENGTH_SHORT).show();
-                                                            requireActivity().getSupportFragmentManager()
-                                                                    .beginTransaction()
-                                                                    .replace(R.id.fragment_container, new GroupesFragment())
-                                                                    .commit();
-                                                        });
-                                            }
-                                        })
-                                        .setNegativeButton("Annuler", null)
-                                        .show();
-                            });
+                    quitterGroupe();
                     return true;
                 }
                 return false;
@@ -147,7 +101,6 @@ public class ListeGroupesFragment extends Fragment {
 
             popup.show();
         });
-
 
         return rootView;
     }
@@ -167,6 +120,155 @@ public class ListeGroupesFragment extends Fragment {
                 });
     }
 
+    private void showContactInviteDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Sélectionnez des contacts à inviter");
+
+        List<Contact> filtered = new ArrayList<>();
+        for (Contact c : contactsList) {
+            if (c.isHasApp()) filtered.add(c);
+        }
+
+        String[] noms = new String[filtered.size()];
+        boolean[] checked = new boolean[filtered.size()];
+        for (int i = 0; i < filtered.size(); i++) {
+            noms[i] = filtered.get(i).getName() + " - " + filtered.get(i).getPhone();
+            checked[i] = false;
+        }
+
+        builder.setMultiChoiceItems(noms, checked, (dialog, which, isChecked) -> {
+            filtered.get(which).setSelected(isChecked);
+        });
+
+        builder.setPositiveButton("Inviter", (dialog, which) -> {
+            for (Contact c : filtered) {
+                if (c.isSelected()) {
+                    sendInvitation(c, groupId);
+                }
+            }
+        });
+
+        builder.setNegativeButton("Annuler", null);
+        builder.show();
+    }
+
+    private void sendInvitation(Contact contact, String groupId) {
+        String link = FirebaseDynamicLinks.getInstance()
+                .createDynamicLink()
+                .setLink(Uri.parse("https://example.com/invite?groupId=" + groupId))
+                .setDomainUriPrefix("https://xyz.page.link")
+                .buildDynamicLink()
+                .getUri()
+                .toString();
+
+        String message = "Rejoignez notre groupe sur Collabasket : " + link;
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + contact.getPhone()));
+        intent.putExtra("sms_body", message);
+        startActivity(intent);
+    }
+
+    private void loadContacts() {
+        ContentResolver resolver = requireContext().getContentResolver();
+        Cursor cursor = resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                new String[]{
+                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                },
+                null, null,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+        );
+
+        if (cursor != null) {
+            try {
+                int nameIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int phoneIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
+
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(nameIndex);
+                    String phone = cursor.getString(phoneIndex);
+                    contactsList.add(new Contact(name, phone));
+                }
+            } finally {
+                cursor.close();
+            }
+            checkExistingUsers();
+        }
+    }
+
+    private void checkExistingUsers() {
+        for (Contact contact : contactsList) {
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .whereEqualTo("phone", contact.getPhone())
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (!snapshot.isEmpty()) {
+                            contact.setHasApp(true);
+                        }
+                    });
+        }
+    }
+
+    private void quitterGroupe() {
+        FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<Map<String, Object>> members = (List<Map<String, Object>>) snapshot.get("members");
+                    List<String> memberIds = (List<String>) snapshot.get("memberIds");
+
+                    String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    final String[] currentRole = { "Membre" };
+
+                    for (Map<String, Object> membre : members) {
+                        if (currentUid.equals(membre.get("userId"))) {
+                            currentRole[0] = membre.get("role") != null ? membre.get("role").toString() : "Membre";
+                            break;
+                        }
+                    }
+
+                    new AlertDialog.Builder(getContext())
+                            .setTitle("Quitter le groupe")
+                            .setMessage(currentRole[0].equals("Propriétaire")
+                                    ? "Vous êtes le Propriétaire. En quittant, le groupe sera supprimé pour tous. Confirmez-vous ?"
+                                    : "Souhaitez-vous vraiment quitter ce groupe ?")
+                            .setPositiveButton("Oui", (dialog, which) -> {
+                                if (currentRole[0].equals("Propriétaire")) {
+                                    FirebaseFirestore.getInstance()
+                                            .collection("groups")
+                                            .document(groupId)
+                                            .delete()
+                                            .addOnSuccessListener(aVoid -> {
+                                                Toast.makeText(getContext(), "Groupe supprimé", Toast.LENGTH_SHORT).show();
+                                                requireActivity().getSupportFragmentManager()
+                                                        .beginTransaction()
+                                                        .replace(R.id.fragment_container, new GroupesFragment())
+                                                        .commit();
+                                            });
+                                } else {
+                                    members.removeIf(m -> currentUid.equals(m.get("userId")));
+                                    memberIds.removeIf(id1 -> id1.equals(currentUid));
+
+                                    FirebaseFirestore.getInstance()
+                                            .collection("groups")
+                                            .document(groupId)
+                                            .update("members", members, "memberIds", memberIds)
+                                            .addOnSuccessListener(aVoid -> {
+                                                Toast.makeText(getContext(), "Vous avez quitté le groupe", Toast.LENGTH_SHORT).show();
+                                                requireActivity().getSupportFragmentManager()
+                                                        .beginTransaction()
+                                                        .replace(R.id.fragment_container, new GroupesFragment())
+                                                        .commit();
+                                            });
+                                }
+                            })
+                            .setNegativeButton("Annuler", null)
+                            .show();
+                });
+    }
+
     private void showAddProduitDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_ajout_produit_groupes, null);
 
@@ -175,15 +277,11 @@ public class ListeGroupesFragment extends Fragment {
         Spinner spinnerUnite = dialogView.findViewById(R.id.spinner_unite);
         Spinner spinnerCategorie = dialogView.findViewById(R.id.spinner_categorie);
 
-        ArrayAdapter<String> uniteAdapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, unitesDisponibles);
-        uniteAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerUnite.setAdapter(uniteAdapter);
+        spinnerUnite.setAdapter(new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_item, unitesDisponibles));
 
-        ArrayAdapter<String> categorieAdapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, categoriesDisponibles);
-        categorieAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerCategorie.setAdapter(categorieAdapter);
+        spinnerCategorie.setAdapter(new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_item, categoriesDisponibles));
 
         new AlertDialog.Builder(getContext())
                 .setTitle("Ajouter un produit")
@@ -202,15 +300,13 @@ public class ListeGroupesFragment extends Fragment {
                     }
 
                     if (!nom.isEmpty()) {
-                        float finalQuantite = quantite; // ✅ capturé ici
+                        final float finalQuantite = quantite; // 👈 nécessaire ici
                         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                        FirebaseFirestore.getInstance()
-                                .collection("users")
+                        firestore.collection("users")
                                 .document(uid)
                                 .get()
-                                .addOnSuccessListener(documentSnapshot -> {
-                                    String ajoutePar = documentSnapshot.getString("username");
+                                .addOnSuccessListener(doc -> {
+                                    String ajoutePar = doc.getString("username");
                                     if (ajoutePar == null || ajoutePar.isEmpty()) {
                                         ajoutePar = "Inconnu";
                                     }

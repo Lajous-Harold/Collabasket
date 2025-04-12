@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:layout_marginBottom="8dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Nom du contact -->
+    <TextView
+        android:id="@+id/contact_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Nom du contact"
+        android:textSize="16sp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"/>
+
+    <!-- Numéro du contact -->
+    <TextView
+        android:id="@+id/contact_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Numéro"
+        android:textSize="14sp"
+        android:layout_marginEnd="8dp"/>
+
+    <!-- Checkbox pour sélectionner le contact -->
+    <CheckBox
+        android:id="@+id/contact_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

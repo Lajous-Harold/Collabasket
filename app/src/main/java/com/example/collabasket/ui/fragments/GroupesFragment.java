@@ -13,8 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
-import com.example.collabasket.ui.adapter.GroupesAdapter;
 import com.example.collabasket.model.Groupes;
+import com.example.collabasket.ui.adapter.GroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -47,7 +47,6 @@ public class GroupesFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
 
         groupesAdapter = new GroupesAdapter((group, groupId) -> {
-            // Lorsque l'utilisateur clique sur un groupe, on le redirige
             ListeGroupesFragment listeGroupesFragment = new ListeGroupesFragment();
             Bundle args = new Bundle();
             args.putString("groupId", groupId);
@@ -111,13 +110,11 @@ public class GroupesFragment extends Fragment {
 
                     if (!groupName.isEmpty()) {
                         String userId = mAuth.getCurrentUser().getUid();
-                        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
                         firestore.collection("users")
                                 .document(userId)
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
-                                    // Construction des membres
                                     List<Map<String, String>> members = new ArrayList<>();
                                     Map<String, String> user = new HashMap<>();
                                     user.put("userId", userId);
