@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "380396726886",
-    "project_id": "collabasket-a9e87",
-    "storage_bucket": "collabasket-a9e87.firebasestorage.app"
+    "project_number": "1075864462481",
+    "project_id": "collabasket-b284c",
+    "storage_bucket": "collabasket-b284c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:380396726886:android:98b3f26c6fe99919d21ba7",
+        "mobilesdk_app_id": "1:1075864462481:android:c9febda6bb1ae9395e0b30",
         "android_client_info": {
-          "package_name": "example.collabasket"
+          "package_name": "com.example.collabasket"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAjQmWBqq7rN-WFbm2WfhnYSPB2VSUq8qw"
+          "current_key": "AIzaSyBxMQcS6RBnwXFrJ7MYIF9gO7Z4XCPYKmk"
         }
       ],
       "services": {
