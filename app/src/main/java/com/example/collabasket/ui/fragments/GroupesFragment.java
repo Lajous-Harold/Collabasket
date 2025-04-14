@@ -51,8 +51,13 @@ public class GroupesFragment extends Fragment {
         groupesAdapter = new GroupesAdapter((group, groupId) -> {
             ListeGroupesFragment listeGroupesFragment = new ListeGroupesFragment();
             Bundle args = new Bundle();
-            args.putString("groupId", groupId);
-            args.putString("groupName", group.getGroupName());
+            if (groupId != null && !groupId.isEmpty()) {
+                args.putString("groupId", groupId);
+            }
+            String groupName = group.getGroupName();
+            if (groupName != null && !groupName.isEmpty()) {
+                args.putString("groupName", groupName);
+            }
             listeGroupesFragment.setArguments(args);
             getActivity().getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, listeGroupesFragment)
