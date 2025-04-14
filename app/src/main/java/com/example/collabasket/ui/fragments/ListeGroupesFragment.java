@@ -37,6 +37,8 @@ public class ListeGroupesFragment extends Fragment {
     private RecyclerView recyclerView;
     private List<Contact> contactsList = new ArrayList<>();
 
+    private static final int REQUEST_READ_CONTACTS = 101;
+
     private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
     private final String[] categoriesDisponibles = {
             "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
@@ -65,7 +67,6 @@ public class ListeGroupesFragment extends Fragment {
         recyclerView.setAdapter(produitAdapter);
 
         loadProduitsForGroup();
-        loadContacts(); // ✅ nouvelle ligne ici
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
         fab.setOnClickListener(v -> showAddProduitDialog());
@@ -79,7 +80,7 @@ public class ListeGroupesFragment extends Fragment {
                 int id = item.getItemId();
 
                 if (id == R.id.menu_ajouter_membre) {
-                    showContactInviteDialog();
+                    checkContactsPermissionEtCharger();
                     return true;
                 } else if (id == R.id.menu_info_groupe) {
                     InfoGroupeFragment infoGroupeFragment = new InfoGroupeFragment();
@@ -105,6 +106,37 @@ public class ListeGroupesFragment extends Fragment {
         return rootView;
     }
 
+    private void checkContactsPermissionEtCharger() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{Manifest.permission.READ_CONTACTS},
+                    REQUEST_READ_CONTACTS
+            );
+        } else {
+            loadContactsEtAfficherDialogue();
+        }
+    }
+
+    private void loadContactsEtAfficherDialogue() {
+        contactsList.clear();
+        loadContacts();
+        showContactInviteDialog();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_READ_CONTACTS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                loadContactsEtAfficherDialogue();
+            } else {
+                Toast.makeText(getContext(), "Permission refusée : impossible de lire les contacts", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     private void loadProduitsForGroup() {
         firestore.collection("groups")
                 .document(groupId)
@@ -118,6 +150,49 @@ public class ListeGroupesFragment extends Fragment {
                     }
                     produitAdapter.setProduits(produits);
                 });
+    }
+
+    private void loadContacts() {
+        ContentResolver resolver = requireContext().getContentResolver();
+        Cursor cursor = resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                new String[]{
+                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                        ContactsContract.CommonDataKinds.Phone.NUMBER
+                },
+                null, null,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+        );
+
+        if (cursor != null) {
+            try {
+                int nameIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int phoneIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
+
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(nameIndex);
+                    String phone = cursor.getString(phoneIndex);
+                    contactsList.add(new Contact(name, phone));
+                }
+            } finally {
+                cursor.close();
+            }
+            checkExistingUsers();
+        }
+    }
+
+    private void checkExistingUsers() {
+        for (Contact contact : contactsList) {
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .whereEqualTo("phone", contact.getPhone())
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        if (!snapshot.isEmpty()) {
+                            contact.setHasApp(true);
+                        }
+                    });
+        }
     }
 
     private void showContactInviteDialog() {
@@ -165,49 +240,6 @@ public class ListeGroupesFragment extends Fragment {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + contact.getPhone()));
         intent.putExtra("sms_body", message);
         startActivity(intent);
-    }
-
-    private void loadContacts() {
-        ContentResolver resolver = requireContext().getContentResolver();
-        Cursor cursor = resolver.query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                new String[]{
-                        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                        ContactsContract.CommonDataKinds.Phone.NUMBER
-                },
-                null, null,
-                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
-        );
-
-        if (cursor != null) {
-            try {
-                int nameIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                int phoneIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
-
-                while (cursor.moveToNext()) {
-                    String name = cursor.getString(nameIndex);
-                    String phone = cursor.getString(phoneIndex);
-                    contactsList.add(new Contact(name, phone));
-                }
-            } finally {
-                cursor.close();
-            }
-            checkExistingUsers();
-        }
-    }
-
-    private void checkExistingUsers() {
-        for (Contact contact : contactsList) {
-            FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .whereEqualTo("phone", contact.getPhone())
-                    .get()
-                    .addOnSuccessListener(snapshot -> {
-                        if (!snapshot.isEmpty()) {
-                            contact.setHasApp(true);
-                        }
-                    });
-        }
     }
 
     private void quitterGroupe() {
@@ -300,7 +332,7 @@ public class ListeGroupesFragment extends Fragment {
                     }
 
                     if (!nom.isEmpty()) {
-                        final float finalQuantite = quantite; // 👈 nécessaire ici
+                        final float finalQuantite = quantite;
                         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                         firestore.collection("users")
                                 .document(uid)
