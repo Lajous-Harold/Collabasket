@@ -9,10 +9,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
 import com.example.collabasket.model.ProduitGroupes;
+import com.example.collabasket.utils.ProduitGroupesDiffCallback;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -38,10 +40,12 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         this.groupId = groupId;
     }
 
-    public void setProduits(List<ProduitAvecId> produits) {
-        this.produits = produits;
-        notifyDataSetChanged();
+    public void setProduits(List<ProduitAvecId> nouveauxProduits) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new ProduitGroupesDiffCallback(this.produits, nouveauxProduits));
+        this.produits = nouveauxProduits;
+        diffResult.dispatchUpdatesTo(this);
     }
+
 
     @NonNull
     @Override

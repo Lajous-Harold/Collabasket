@@ -44,12 +44,5 @@ Utilité : Affiche la liste des groupes de l'utilisateur, permet la création de
         android:contentDescription="Ajouter un groupe"
         android:src="@android:drawable/ic_input_add" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_contacts"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
-
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

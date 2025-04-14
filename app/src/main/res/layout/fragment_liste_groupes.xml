@@ -60,4 +60,15 @@ Utilité : Affiche la liste de courses partagée d’un groupe sélectionné.
         android:layout_marginRight="24dp"
         android:contentDescription="Ajouter un produit"
         android:src="@android:drawable/ic_input_add" />
+
+    <TextView
+        android:id="@+id/text_empty_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Aucun produit dans ce groupe"
+        android:textColor="@android:color/darker_gray"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginTop="16dp"/>
+
 </FrameLayout>

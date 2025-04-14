@@ -44,8 +44,8 @@ public class ListeGroupesFragment extends Fragment {
     private ProduitGroupesAdapter produitAdapter;
     private RecyclerView recyclerView;
     private List<Contact> contactsList = new ArrayList<>();
-
     private ActivityResultLauncher<String> contactsPermissionLauncher;
+    private TextView textEmptyList;
 
     private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
     private final String[] categoriesDisponibles = {
@@ -76,6 +76,7 @@ public class ListeGroupesFragment extends Fragment {
         );
 
         TextView titre = rootView.findViewById(R.id.text_group_title);
+        textEmptyList = rootView.findViewById(R.id.text_empty_list);
         titre.setText(groupName);
 
         firestore = FirebaseFirestore.getInstance();
@@ -324,9 +325,22 @@ public class ListeGroupesFragment extends Fragment {
                         ProduitGroupes produit = doc.toObject(ProduitGroupes.class);
                         produits.add(new ProduitGroupesAdapter.ProduitAvecId(doc.getId(), produit));
                     }
+
                     produitAdapter.setProduits(produits);
+
+                    // ✅ Gérer l'affichage du message si la liste est vide
+                    if (produits.isEmpty()) {
+                        textEmptyList.setVisibility(View.VISIBLE);
+                    } else {
+                        textEmptyList.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Erreur lors du chargement des produits", Toast.LENGTH_SHORT).show();
+                    Log.e("ListeGroupesFragment", "Erreur Firestore : ", e);
                 });
     }
+
     private void quitterGroupe() {
         FirebaseFirestore.getInstance()
                 .collection("groups")
