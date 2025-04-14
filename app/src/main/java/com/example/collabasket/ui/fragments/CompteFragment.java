@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +42,7 @@ public class CompteFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "CompteFragment onCreateView");
         View view = inflater.inflate(R.layout.fragment_compte, container, false);
 
         mAuth = FirebaseAuth.getInstance();

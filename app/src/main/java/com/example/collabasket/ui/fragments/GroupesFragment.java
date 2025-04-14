@@ -37,6 +37,8 @@ public class GroupesFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "GroupesFragment onCreateView");
+
         View view = inflater.inflate(R.layout.fragment_groupes, container, false);
 
         recyclerView = view.findViewById(R.id.recycler_view_groups);

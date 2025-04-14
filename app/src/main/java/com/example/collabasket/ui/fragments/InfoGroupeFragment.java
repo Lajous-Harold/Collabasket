@@ -3,6 +3,7 @@ package com.example.collabasket.ui.fragments;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.*;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +31,7 @@ public class InfoGroupeFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "InfoGroupeFragment onCreateView");
 
         View view = inflater.inflate(R.layout.fragment_info_groupe, container, false);
 

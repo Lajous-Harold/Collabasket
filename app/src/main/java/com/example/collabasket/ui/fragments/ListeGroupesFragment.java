@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -219,36 +220,77 @@ public class ListeGroupesFragment extends Fragment {
         }
         return cleaned;
     }
-
     private void showContactInviteDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Sélectionnez des contacts à inviter");
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_invitation_contacts, null);
 
-        List<Contact> sorted = new ArrayList<>(contactsList);
-        sorted.sort((a, b) -> Boolean.compare(!b.isHasApp(), !a.isHasApp())); // avec app d'abord
+        SearchView searchView = dialogView.findViewById(R.id.search_contacts);
+        ListView listView = dialogView.findViewById(R.id.list_contacts);
 
-        String[] noms = new String[sorted.size()];
-        boolean[] checked = new boolean[sorted.size()];
-        for (int i = 0; i < sorted.size(); i++) {
-            noms[i] = sorted.get(i).getName() + " - " + sorted.get(i).getPhone();
-            checked[i] = false;
+        // Tous les contacts triés : avec app d’abord
+        List<Contact> sortedContacts = new ArrayList<>(contactsList);
+        sortedContacts.sort((a, b) -> Boolean.compare(!b.isHasApp(), !a.isHasApp()));
+
+        // Liste visible et liste filtrée synchronisées
+        List<Contact> filteredContacts = new ArrayList<>(sortedContacts);
+        List<String> affichages = new ArrayList<>();
+        for (Contact c : filteredContacts) {
+            String badge = c.isHasApp() ? " ✅" : "";
+            affichages.add(c.getName() + " - " + c.getPhone() + badge);
         }
 
-        builder.setMultiChoiceItems(noms, checked, (dialog, which, isChecked) -> {
-            sorted.get(which).setSelected(isChecked);
-        });
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_multiple_choice, affichages);
+        listView.setAdapter(adapter);
+        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
-        builder.setPositiveButton("Inviter", (dialog, which) -> {
-            for (Contact c : sorted) {
-                if (c.isSelected()) {
-                    sendInvitation(c, groupId);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                affichages.clear();
+                filteredContacts.clear();
+
+                for (Contact c : sortedContacts) {
+                    String phone = c.getPhone().replaceAll("\\s", "");
+                    String name = c.getName().toLowerCase();
+                    String query = newText.toLowerCase().replaceAll("\\s", "");
+
+                    if (name.contains(query) || phone.contains(query)) {
+                        filteredContacts.add(c);
+                        String badge = c.isHasApp() ? " ✅" : "";
+                        affichages.add(c.getName() + " - " + c.getPhone() + badge);
+                    }
                 }
+
+                adapter.clear();
+                adapter.addAll(affichages);
+                adapter.notifyDataSetChanged();
+                return true;
             }
         });
 
-        builder.setNegativeButton("Annuler", null);
-        builder.show();
+        new AlertDialog.Builder(getContext())
+                .setTitle("Sélectionner des contacts à inviter")
+                .setView(dialogView)
+                .setPositiveButton("Inviter", (dialog, which) -> {
+                    SparseBooleanArray checked = listView.getCheckedItemPositions();
+                    for (int i = 0; i < checked.size(); i++) {
+                        if (checked.valueAt(i)) {
+                            int position = checked.keyAt(i);
+                            Contact selected = filteredContacts.get(position);
+                            selected.setSelected(true);
+                            sendInvitation(selected, groupId);
+                        }
+                    }
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
     }
+
+
 
     private void sendInvitation(Contact contact, String groupId) {
         String link = FirebaseDynamicLinks.getInstance()

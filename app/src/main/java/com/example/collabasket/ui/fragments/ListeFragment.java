@@ -42,6 +42,7 @@ public class ListeFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "ListeFragment onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_liste, container, false);
 

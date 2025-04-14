@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout personnalisé pour la boîte de dialogue d'invitation des contacts -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Barre de recherche pour filtrer les contacts par nom ou numéro -->
+    <SearchView
+        android:id="@+id/search_contacts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:queryHint="Rechercher un contact..." />
+
+    <!-- Liste des contacts avec sélection multiple -->
+    <ListView
+        android:id="@+id/list_contacts"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:choiceMode="multipleChoice"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+</LinearLayout>

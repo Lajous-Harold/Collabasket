@@ -2,6 +2,7 @@ package com.example.collabasket;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,6 +13,8 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "SplashActivity onCreate lancé");
+
         super.onCreate(savedInstanceState);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();

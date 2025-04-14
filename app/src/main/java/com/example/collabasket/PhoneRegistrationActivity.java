@@ -3,6 +3,7 @@ package com.example.collabasket;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.*;
 import android.view.View;
 
@@ -26,6 +27,8 @@ public class PhoneRegistrationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d("DEBUG_STARTUP", "PhoneRegistrationActivity onCreate lancé");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_phone_registration);
 
