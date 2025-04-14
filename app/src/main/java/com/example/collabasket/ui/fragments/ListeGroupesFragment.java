@@ -104,7 +104,9 @@ public class ListeGroupesFragment extends Fragment {
                 } else if (id == R.id.menu_info_groupe) {
                     InfoGroupeFragment infoGroupeFragment = new InfoGroupeFragment();
                     Bundle args = new Bundle();
-                    args.putString("groupId", groupId);
+                    if (groupId != null && !groupId.isEmpty()) {
+                        args.putString("groupId", groupId);
+                    }
                     infoGroupeFragment.setArguments(args);
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
