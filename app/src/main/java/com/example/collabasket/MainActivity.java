@@ -79,8 +79,11 @@ public class MainActivity extends AppCompatActivity {
 
                         ListeGroupesFragment fragment = new ListeGroupesFragment();
                         Bundle args = new Bundle();
-                        args.putString("groupId", groupId);
+                        if (groupId != null && !groupId.isEmpty()) {
+                            args.putString("groupId", groupId);
+                        }
                         args.putString("groupName", "Groupe");
+
 
                         fragment.setArguments(args);
 
