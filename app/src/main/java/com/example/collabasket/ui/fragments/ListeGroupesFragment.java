@@ -307,7 +307,9 @@ public class ListeGroupesFragment extends Fragment {
         String message = "Rejoignez notre groupe sur Collabasket : " + link;
 
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + contact.getPhone()));
-        intent.putExtra("sms_body", message);
+        if (message != null && !message.isEmpty()) {
+            intent.putExtra("sms_body", message);
+        }
         startActivity(intent);
     }
 
