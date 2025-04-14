@@ -71,16 +71,17 @@ public class InfoGroupeFragment extends Fragment {
                             listeMembres.removeAllViews();
 
                             for (Map<String, Object> membre : membres) {
-                                if (currentUserId.equals(membre.get("userId"))) {
-                                    currentUserRole = membre.get("role") != null ? membre.get("role").toString() : "Membre";
+                                if (membre.containsKey("userId") && currentUserId.equals(membre.get("userId"))) {
+                                    Object role = membre.get("role");
+                                    currentUserRole = role instanceof String ? (String) role : "Membre";
                                     break;
                                 }
                             }
 
                             for (Map<String, Object> membre : membres) {
-                                String username = membre.get("userName") != null ? membre.get("userName").toString() : "(Nom inconnu)";
-                                String numero = membre.get("numero") != null ? membre.get("numero").toString() : "(Numéro inconnu)";
-                                String role = membre.get("role") != null ? membre.get("role").toString() : "Membre";
+                                String username = membre.containsKey("userName") && membre.get("userName") instanceof String ? (String) membre.get("userName") : "Inconnu";
+                                String numero = membre.containsKey("numero") && membre.get("numero") instanceof String ? (String) membre.get("numero") : "Inconnu";
+                                String role = membre.containsKey("role") && membre.get("role") instanceof String ? (String) membre.get("role") : "Membre";
 
                                 // Affichage des rôles avec les nouveaux noms
                                 String roleLabel = "";
