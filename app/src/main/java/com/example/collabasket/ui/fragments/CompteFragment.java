@@ -68,7 +68,7 @@ public class CompteFragment extends Fragment {
                     .get()
                     .addOnSuccessListener(doc -> {
                         if (doc.exists()) {
-                            editNom.setText(doc.getString("username"));
+                            editNom.setText(doc.contains("username") && doc.get("username") != null ? doc.getString("username") : "");
                         }
                     });
         }
