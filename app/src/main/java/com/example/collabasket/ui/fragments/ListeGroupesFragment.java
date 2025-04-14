@@ -26,6 +26,7 @@ import com.example.collabasket.model.ProduitGroupes;
 import com.example.collabasket.ui.adapter.ProduitGroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.dynamiclinks.DynamicLink;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.*;
 
@@ -230,16 +231,20 @@ public class ListeGroupesFragment extends Fragment {
         String link = FirebaseDynamicLinks.getInstance()
                 .createDynamicLink()
                 .setLink(Uri.parse("https://example.com/invite?groupId=" + groupId))
-                .setDomainUriPrefix("https://xyz.page.link")
+                .setDomainUriPrefix("https://collabasket.page.link") // change par ton domaine Firebase
+                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder().build())
                 .buildDynamicLink()
                 .getUri()
                 .toString();
 
         String message = "Rejoignez notre groupe sur Collabasket : " + link;
+
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + contact.getPhone()));
         intent.putExtra("sms_body", message);
         startActivity(intent);
     }
+
+
 
     private void quitterGroupe() {
         FirebaseFirestore.getInstance()
