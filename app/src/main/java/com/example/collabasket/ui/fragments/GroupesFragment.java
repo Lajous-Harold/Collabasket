@@ -120,8 +120,8 @@ public class GroupesFragment extends Fragment {
                                     List<Map<String, String>> members = new ArrayList<>();
                                     Map<String, String> user = new HashMap<>();
                                     user.put("userId", userId);
-                                    user.put("userName", documentSnapshot.getString("username"));
-                                    user.put("numero", documentSnapshot.getString("phone"));
+                                    user.put("userName", documentSnapshot.contains("username") ? documentSnapshot.getString("username") : "");
+                                    user.put("numero", documentSnapshot.contains("phone") ? documentSnapshot.getString("phone") : "");
                                     user.put("role", "Propriétaire");
 
                                     members.add(user);
