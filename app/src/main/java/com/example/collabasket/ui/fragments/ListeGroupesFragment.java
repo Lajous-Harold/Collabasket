@@ -60,8 +60,8 @@ public class ListeGroupesFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_liste_groupes, container, false);
 
         if (getArguments() != null) {
-            groupId = getArguments().getString("groupId");
-            groupName = getArguments().getString("groupName");
+            groupId = getArguments() != null && getArguments().containsKey("groupId") ? getArguments().getString("groupId") : "";
+            groupName = getArguments() != null && getArguments().containsKey("groupName") ? getArguments().getString("groupName") : "";
         }
 
         contactsPermissionLauncher = registerForActivityResult(
@@ -419,7 +419,7 @@ public class ListeGroupesFragment extends Fragment {
                                 .document(uid)
                                 .get()
                                 .addOnSuccessListener(doc -> {
-                                    String ajoutePar = doc.getString("username");
+                                    String ajoutePar = doc.contains("username") ? doc.getString("username") : "Inconnu";
                                     if (ajoutePar == null || ajoutePar.isEmpty()) {
                                         ajoutePar = "Inconnu";
                                     }
