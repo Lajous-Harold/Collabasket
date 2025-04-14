@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,7 @@ import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -134,22 +136,6 @@ public class ListeGroupesFragment extends Fragment {
     private void loadContactsEtAfficherDialogue() {
         contactsList.clear();
         loadContacts();
-        showContactInviteDialog();
-    }
-
-    private void loadProduitsForGroup() {
-        firestore.collection("groups")
-                .document(groupId)
-                .collection("produits")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<ProduitGroupesAdapter.ProduitAvecId> produits = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        ProduitGroupes produit = doc.toObject(ProduitGroupes.class);
-                        produits.add(new ProduitGroupesAdapter.ProduitAvecId(doc.getId(), produit));
-                    }
-                    produitAdapter.setProduits(produits);
-                });
     }
 
     private void loadContacts() {
@@ -168,55 +154,92 @@ public class ListeGroupesFragment extends Fragment {
             try {
                 int nameIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                 int phoneIndex = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                HashSet<String> numerosVus = new HashSet<>();
 
                 while (cursor.moveToNext()) {
                     String name = cursor.getString(nameIndex);
-                    String phone = cursor.getString(phoneIndex);
-                    contactsList.add(new Contact(name, phone));
+                    String phone = cursor.getString(phoneIndex).replaceAll("[\\s\\-()]", "");
+
+                    String cle = name + "-" + phone;
+                    if (!numerosVus.contains(cle)) {
+                        numerosVus.add(cle);
+                        contactsList.add(new Contact(name, phone));
+                        Log.d("CONTACTS_DEBUG", "Contact lu : " + name + " - " + phone);
+                    }
                 }
             } finally {
                 cursor.close();
             }
             checkExistingUsers();
+        } else {
+            Log.w("CONTACTS_DEBUG", "Le curseur est nul. Aucun contact lu.");
         }
     }
 
     private void checkExistingUsers() {
+        final int totalContacts = contactsList.size();
+        final int[] processed = {0};
+
+        if (totalContacts == 0) {
+            showContactInviteDialog();
+            return;
+        }
+
         for (Contact contact : contactsList) {
+            String rawPhone = normaliserNumero(contact.getPhone());
+            contact.setPhone(rawPhone);
+
             FirebaseFirestore.getInstance()
                     .collection("users")
-                    .whereEqualTo("phone", contact.getPhone())
+                    .whereEqualTo("phone", rawPhone)
                     .get()
                     .addOnSuccessListener(snapshot -> {
                         if (!snapshot.isEmpty()) {
                             contact.setHasApp(true);
                         }
+
+                        processed[0]++;
+                        if (processed[0] == totalContacts) {
+                            showContactInviteDialog();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        processed[0]++;
+                        if (processed[0] == totalContacts) {
+                            showContactInviteDialog();
+                        }
                     });
         }
+    }
+
+    private String normaliserNumero(String numero) {
+        String cleaned = numero.replaceAll("[\\s\\-()]", "");
+        if (cleaned.startsWith("0")) {
+            cleaned = "+33" + cleaned.substring(1);
+        }
+        return cleaned;
     }
 
     private void showContactInviteDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Sélectionnez des contacts à inviter");
 
-        List<Contact> filtered = new ArrayList<>();
-        for (Contact c : contactsList) {
-            if (c.isHasApp()) filtered.add(c);
-        }
+        List<Contact> sorted = new ArrayList<>(contactsList);
+        sorted.sort((a, b) -> Boolean.compare(!b.isHasApp(), !a.isHasApp())); // avec app d'abord
 
-        String[] noms = new String[filtered.size()];
-        boolean[] checked = new boolean[filtered.size()];
-        for (int i = 0; i < filtered.size(); i++) {
-            noms[i] = filtered.get(i).getName() + " - " + filtered.get(i).getPhone();
+        String[] noms = new String[sorted.size()];
+        boolean[] checked = new boolean[sorted.size()];
+        for (int i = 0; i < sorted.size(); i++) {
+            noms[i] = sorted.get(i).getName() + " - " + sorted.get(i).getPhone();
             checked[i] = false;
         }
 
         builder.setMultiChoiceItems(noms, checked, (dialog, which, isChecked) -> {
-            filtered.get(which).setSelected(isChecked);
+            sorted.get(which).setSelected(isChecked);
         });
 
         builder.setPositiveButton("Inviter", (dialog, which) -> {
-            for (Contact c : filtered) {
+            for (Contact c : sorted) {
                 if (c.isSelected()) {
                     sendInvitation(c, groupId);
                 }
@@ -231,7 +254,7 @@ public class ListeGroupesFragment extends Fragment {
         String link = FirebaseDynamicLinks.getInstance()
                 .createDynamicLink()
                 .setLink(Uri.parse("https://example.com/invite?groupId=" + groupId))
-                .setDomainUriPrefix("https://collabasket.page.link") // change par ton domaine Firebase
+                .setDomainUriPrefix("https://collabasket.page.link")
                 .setAndroidParameters(new DynamicLink.AndroidParameters.Builder().build())
                 .buildDynamicLink()
                 .getUri()
@@ -244,8 +267,20 @@ public class ListeGroupesFragment extends Fragment {
         startActivity(intent);
     }
 
-
-
+    private void loadProduitsForGroup() {
+        firestore.collection("groups")
+                .document(groupId)
+                .collection("produits")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<ProduitGroupesAdapter.ProduitAvecId> produits = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        ProduitGroupes produit = doc.toObject(ProduitGroupes.class);
+                        produits.add(new ProduitGroupesAdapter.ProduitAvecId(doc.getId(), produit));
+                    }
+                    produitAdapter.setProduits(produits);
+                });
+    }
     private void quitterGroupe() {
         FirebaseFirestore.getInstance()
                 .collection("groups")
