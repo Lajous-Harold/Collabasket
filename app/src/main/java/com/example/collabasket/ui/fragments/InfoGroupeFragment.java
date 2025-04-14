@@ -49,7 +49,7 @@ public class InfoGroupeFragment extends Fragment {
         currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         if (getArguments() != null) {
-            groupId = getArguments().getString("groupId");
+            groupId = getArguments() != null && getArguments().containsKey("groupId") ? getArguments().getString("groupId") : "";
         }
 
         chargerInfosGroupe();
@@ -63,7 +63,7 @@ public class InfoGroupeFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String nom = documentSnapshot.getString("groupName");
+                        String nom = documentSnapshot.contains("groupName") ? documentSnapshot.getString("groupName") : "";
                         nomGroupe.setText(nom != null ? nom : "Groupe");
 
                         List<Map<String, Object>> membres = (List<Map<String, Object>>) documentSnapshot.get("members");
