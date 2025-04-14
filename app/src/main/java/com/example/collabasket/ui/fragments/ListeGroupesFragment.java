@@ -3,6 +3,7 @@ package com.example.collabasket.ui.fragments;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,6 +13,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,7 +41,7 @@ public class ListeGroupesFragment extends Fragment {
     private RecyclerView recyclerView;
     private List<Contact> contactsList = new ArrayList<>();
 
-    private static final int REQUEST_READ_CONTACTS = 101;
+    private ActivityResultLauncher<String> contactsPermissionLauncher;
 
     private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
     private final String[] categoriesDisponibles = {
@@ -55,6 +59,17 @@ public class ListeGroupesFragment extends Fragment {
             groupId = getArguments().getString("groupId");
             groupName = getArguments().getString("groupName");
         }
+
+        contactsPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        loadContactsEtAfficherDialogue();
+                    } else {
+                        Toast.makeText(getContext(), "Permission refusée : impossible de lire les contacts", Toast.LENGTH_LONG).show();
+                    }
+                }
+        );
 
         TextView titre = rootView.findViewById(R.id.text_group_title);
         titre.setText(groupName);
@@ -107,14 +122,11 @@ public class ListeGroupesFragment extends Fragment {
     }
 
     private void checkContactsPermissionEtCharger() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(
-                    new String[]{Manifest.permission.READ_CONTACTS},
-                    REQUEST_READ_CONTACTS
-            );
-        } else {
+        if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED) {
             loadContactsEtAfficherDialogue();
+        } else {
+            contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS);
         }
     }
 
@@ -122,19 +134,6 @@ public class ListeGroupesFragment extends Fragment {
         contactsList.clear();
         loadContacts();
         showContactInviteDialog();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == REQUEST_READ_CONTACTS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                loadContactsEtAfficherDialogue();
-            } else {
-                Toast.makeText(getContext(), "Permission refusée : impossible de lire les contacts", Toast.LENGTH_LONG).show();
-            }
-        }
     }
 
     private void loadProduitsForGroup() {
