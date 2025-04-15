@@ -3,72 +3,95 @@ Classe associée : CompteFragment
 Utilité : Affiche et permet la modification des informations du compte utilisateur.
 -->
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <EditText
-            android:id="@+id/edit_nom"
-            android:hint="Nom"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/btn_update_nom"
-            android:text="Modifier le nom"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp" />
+            <EditText
+                android:id="@+id/edit_nom"
+                android:hint="Nom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-        <TextView
-            android:id="@+id/text_email"
-            android:text="Email :"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/btn_update_nom"
+                android:text="Modifier le nom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp" />
 
-        <TextView
-            android:id="@+id/text_phone"
-            android:text="Téléphone :"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <TextView
+                android:id="@+id/text_email"
+                android:text="Email :"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/btn_update_phone"
-            android:text="Modifier le numéro (à venir)"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            <TextView
+                android:id="@+id/text_phone"
+                android:text="Téléphone :"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
-        <Button
-            android:id="@+id/btn_update_password"
-            android:text="Réinitialiser le mot de passe"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            <Button
+                android:id="@+id/btn_update_phone"
+                android:text="Modifier le numéro (à venir)"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
 
-        <TextView
-            android:id="@+id/text_uid"
-            android:text="UID :"
-            android:textSize="12sp"
-            android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="32dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <Button
+                android:id="@+id/btn_update_password"
+                android:text="Réinitialiser le mot de passe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp" />
 
-        <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Déconnexion"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@android:color/holo_red_light"
-            android:textColor="@android:color/white" />
+            <Button
+                android:id="@+id/btn_notifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Gérer les notifications"
+                android:layout_marginTop="24dp" />
 
-    </LinearLayout>
-</ScrollView>
+            <Button
+                android:id="@+id/btn_cgu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Voir les CGU"
+                android:layout_marginTop="16dp"/>
+
+            <Button
+                android:id="@+id/btn_logout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Déconnexion"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="@android:color/holo_red_light"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- UID fixé en bas de l'écran -->
+    <TextView
+        android:id="@+id/text_uid"
+        android:text="UID :"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="80dp" />
+</LinearLayout>

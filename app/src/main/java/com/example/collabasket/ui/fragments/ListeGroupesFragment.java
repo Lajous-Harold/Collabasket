@@ -2,22 +2,21 @@ package com.example.collabasket.ui.fragments;
 
 import android.app.AlertDialog;
 import android.content.ContentResolver;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+import android.Manifest;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -30,8 +29,6 @@ import com.example.collabasket.ui.adapter.ContactAdapter;
 import com.example.collabasket.ui.adapter.ProduitGroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.dynamiclinks.DynamicLink;
-import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
@@ -267,17 +264,37 @@ public class ListeGroupesFragment extends Fragment {
         builder.show();
     }
     private void envoyerInvitationParSms(List<Contact> contacts) {
-        if (contacts == null || contacts.isEmpty()) return;
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS)
+                == PackageManager.PERMISSION_GRANTED) {
 
-        String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
-        String message = "Salut ! Rejoins notre liste de courses partagée sur Collabasket : " + lienInvitation;
+            String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
+            String message = "Salut ! Rejoins notre liste de courses partagée sur Collabasket : " + lienInvitation;
 
-        SmsManager smsManager = SmsManager.getDefault();
-        for (Contact contact : contacts) {
-            smsManager.sendTextMessage(contact.getPhone(), null, message, null, null);
+            SmsManager smsManager = SmsManager.getDefault();
+            for (Contact contact : contacts) {
+                String numero = contact.getPhone();
+                if (numero != null && !numero.isEmpty()) {
+                    smsManager.sendTextMessage(numero, null, message, null, null);
+                }
+            }
+
+            Toast.makeText(getContext(), "Invitations envoyées par SMS", Toast.LENGTH_SHORT).show();
+
+        } else {
+            contactsEnAttenteSms = contacts;
+            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, REQUEST_SEND_SMS);
         }
-
-        Toast.makeText(getContext(), "Invitations envoyées par SMS", Toast.LENGTH_SHORT).show();
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_SEND_SMS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                envoyerInvitationParSms(contactsEnAttenteSms);
+            } else {
+                Toast.makeText(getContext(), "Permission SMS refusée", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
     private void loadProduitsForGroup() {
         firestore.collection("groups")

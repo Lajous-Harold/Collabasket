@@ -49,6 +49,7 @@ dependencies {
 
     implementation("com.hbb20:ccp:2.7.1")
     implementation ("com.google.firebase:firebase-dynamic-links:20.1.0")
+    implementation ("com.google.firebase:firebase-messaging:23.4.1")
 
 
 }

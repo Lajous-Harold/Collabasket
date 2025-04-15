@@ -140,6 +140,16 @@ public class CompteFragment extends Fragment {
                     .show();
         });
 
+        Button btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnNotifications.setOnClickListener(v -> {
+            NotificationsFragment notificationsFragment = new NotificationsFragment();
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, notificationsFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
         Button btnLogout = view.findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();

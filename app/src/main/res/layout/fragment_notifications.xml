@@ -1,0 +1,44 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Switch
+            android:id="@+id/switch_global"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activer les notifications" />
+
+        <View android:layout_height="16dp" android:layout_width="match_parent"/>
+
+        <Switch
+            android:id="@+id/switch_produit_ajoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Produit ajouté" />
+
+        <Switch
+            android:id="@+id/switch_produit_supprime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Produit supprimé" />
+
+        <Switch
+            android:id="@+id/switch_membre_ajoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Membre ajouté au groupe" />
+
+        <Switch
+            android:id="@+id/switch_groupe_cree"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Groupe créé" />
+
+    </LinearLayout>
+</ScrollView>

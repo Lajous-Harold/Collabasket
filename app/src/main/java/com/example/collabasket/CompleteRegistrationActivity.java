@@ -93,6 +93,16 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
                         userData.put("email", email);
                         userData.put("phone", user.getPhoneNumber());
 
+                        // Préférences de notifications activées par défaut
+                        Map<String, Object> defaultNotifications = new HashMap<>();
+                        defaultNotifications.put("global", true);
+                        defaultNotifications.put("produitAjoute", true);
+                        defaultNotifications.put("produitSupprime", true);
+                        defaultNotifications.put("membreAjoute", true);
+                        defaultNotifications.put("groupeCree", true);
+
+                        userData.put("notificationsSettings", defaultNotifications);
+
                         firestore.collection("users").document(user.getUid())
                                 .set(userData)
                                 .addOnSuccessListener(unused -> {
@@ -106,6 +116,7 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
                                             .setCancelable(false)
                                             .show();
                                 });
+
                     }
                 })
                 .addOnFailureListener(e -> {
