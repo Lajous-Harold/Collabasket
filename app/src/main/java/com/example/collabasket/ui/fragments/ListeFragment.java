@@ -29,9 +29,9 @@ public class ListeFragment extends Fragment {
     private ProduitAdapter adapter;
     private FirebaseFirestore firestore;
     private CollectionReference produitsRef;
-
-    private final String[] unitesDisponibles = new String[] { "pcs", "g", "kg", "ml", "L" };
-    private final String[] categoriesDisponibles = new String[] {
+    private TextView textEmptyList;
+    private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
+    private final String[] categoriesDisponibles = {
             "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
             "Épicerie sucrée", "Épicerie salée", "Boissons", "Surgelés",
             "Produits ménagers", "Hygiène et beauté", "Bébé", "Animaux",
@@ -47,32 +47,39 @@ public class ListeFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_liste, container, false);
 
         RecyclerView recyclerView = rootView.findViewById(R.id.recycler_view_produits);
+        textEmptyList = rootView.findViewById(R.id.text_empty_list);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
         adapter = new ProduitAdapter();
         recyclerView.setAdapter(adapter);
 
         firestore = FirebaseFirestore.getInstance();
-        produitsRef = firestore.collection("produits");
-
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // ✅ Filtrer les produits par utilisateur
-        produitsRef.whereEqualTo("userId", currentUserId)
-                .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        Log.e("FIRESTORE", "Erreur d'écoute : ", error);
-                        return;
-                    }
+        produitsRef = firestore.collection("users")
+                .document(currentUserId)
+                .collection("produits");
 
-                    List<Produit> produits = new ArrayList<>();
-                    if (value != null) {
-                        for (QueryDocumentSnapshot doc : value) {
-                            produits.add(doc.toObject(Produit.class));
-                        }
-                        adapter.setProduits(produits);
-                    }
-                });
+        // 🔄 Synchronisation des produits personnels
+        produitsRef.addSnapshotListener((value, error) -> {
+            if (error != null) {
+                Log.e("FIRESTORE", "Erreur d'écoute Firestore : ", error);
+                return;
+            }
+
+            List<Produit> produits = new ArrayList<>();
+            if (value != null) {
+                for (QueryDocumentSnapshot doc : value) {
+                    produits.add(doc.toObject(Produit.class));
+                }
+                adapter.setProduits(produits);
+
+                // Afficher ou masquer le message de liste vide
+                if (textEmptyList != null) {
+                    textEmptyList.setVisibility(produits.isEmpty() ? View.VISIBLE : View.GONE);
+                }
+            }
+        });
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter);
         fab.setOnClickListener(v -> {
@@ -109,8 +116,7 @@ public class ListeFragment extends Fragment {
                         }
 
                         if (!nom.isEmpty()) {
-                            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                            Produit produit = new Produit(nom, categorie, quantite, unite, userId);
+                            Produit produit = new Produit(nom, categorie, quantite, unite, currentUserId);
                             produitsRef.add(produit);
                         }
                     })

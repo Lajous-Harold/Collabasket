@@ -16,6 +16,17 @@ Utilité : Affiche la liste de courses personnelle de l’utilisateur (hors grou
         android:layout_height="match_parent"
         android:padding="8dp" />
 
+    <TextView
+        android:id="@+id/text_empty_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Votre liste est vide"
+        android:textColor="@android:color/darker_gray"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:layout_marginTop="32dp"/>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_ajouter"
         android:layout_width="wrap_content"

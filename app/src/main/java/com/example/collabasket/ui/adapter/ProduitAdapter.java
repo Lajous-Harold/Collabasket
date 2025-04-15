@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -54,7 +55,6 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(current.coche);
 
-        // Texte barré + bouton supprimer
         if (current.coche) {
             holder.nomTextView.setPaintFlags(holder.nomTextView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
             holder.btnSupprimer.setVisibility(View.VISIBLE);
@@ -63,18 +63,20 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
             holder.btnSupprimer.setVisibility(View.GONE);
         }
 
-        // Mise à jour du champ coche dans Firestore
+        // Mise à jour coche dans /users/{uid}/produits
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             current.coche = isChecked;
             notifyItemChanged(position);
 
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
             FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
                     .collection("produits")
                     .whereEqualTo("nom", current.nom)
                     .whereEqualTo("categorie", current.categorie)
                     .whereEqualTo("quantite", current.quantite)
                     .whereEqualTo("unite", current.unite)
-                    .whereEqualTo("userId", current.userId)
                     .get()
                     .addOnSuccessListener(snapshots -> {
                         for (QueryDocumentSnapshot doc : snapshots) {
