@@ -64,11 +64,12 @@ Utilité : Affiche la liste de courses partagée d’un groupe sélectionné.
     <TextView
         android:id="@+id/text_empty_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Aucun produit dans ce groupe"
-        android:textColor="@android:color/darker_gray"
+        android:layout_height="match_parent"
+        android:text="Aucun produit pour l'instant"
         android:gravity="center"
         android:visibility="gone"
-        android:layout_marginTop="16dp"/>
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray" />
+
 
 </FrameLayout>

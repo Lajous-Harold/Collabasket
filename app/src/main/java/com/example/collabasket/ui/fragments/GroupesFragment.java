@@ -17,6 +17,7 @@ import com.example.collabasket.model.Groupes;
 import com.example.collabasket.ui.adapter.GroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -33,6 +34,7 @@ public class GroupesFragment extends Fragment {
     private GroupesAdapter groupesAdapter;
     private FirebaseFirestore firestore;
     private FirebaseAuth mAuth;
+    private ProgressBar progressBar;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -41,6 +43,7 @@ public class GroupesFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_groupes, container, false);
 
+        progressBar = view.findViewById(R.id.progress_loading);
         recyclerView = view.findViewById(R.id.recycler_view_groups);
         textEmptyGroups = view.findViewById(R.id.text_empty_groups);
         fabAddGroup = view.findViewById(R.id.fab_add_groupes);
@@ -48,22 +51,24 @@ public class GroupesFragment extends Fragment {
         firestore = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
 
-        groupesAdapter = new GroupesAdapter((group, groupId) -> {
+        groupesAdapter = new GroupesAdapter(group -> {
             ListeGroupesFragment listeGroupesFragment = new ListeGroupesFragment();
             Bundle args = new Bundle();
-            if (groupId != null && !groupId.isEmpty()) {
-                args.putString("groupId", groupId);
+            if (group.getId() != null && !group.getId().isEmpty()) {
+                args.putString("groupId", group.getId());
             }
-            String groupName = group.getGroupName();
-            if (groupName != null && !groupName.isEmpty()) {
-                args.putString("groupName", groupName);
+            if (group.getGroupName() != null && !group.getGroupName().isEmpty()) {
+                args.putString("groupName", group.getGroupName());
             }
             listeGroupesFragment.setArguments(args);
-            getActivity().getSupportFragmentManager().beginTransaction()
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
                     .replace(R.id.fragment_container, listeGroupesFragment)
                     .addToBackStack(null)
                     .commit();
         });
+
+
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(groupesAdapter);
@@ -83,21 +88,16 @@ public class GroupesFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     List<Groupes> userGroups = new ArrayList<>();
-                    List<String> groupIds = new ArrayList<>();
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Groupes group = document.toObject(Groupes.class);
+                        group.setId(document.getId());  // Important pour le DiffUtil
                         userGroups.add(group);
-                        groupIds.add(document.getId());
                     }
 
-                    groupesAdapter.setGroups(userGroups, groupIds);
+                    groupesAdapter.submitList(userGroups);
 
-                    if (userGroups.isEmpty()) {
-                        textEmptyGroups.setVisibility(View.VISIBLE);
-                    } else {
-                        textEmptyGroups.setVisibility(View.GONE);
-                    }
+                    textEmptyGroups.setVisibility(userGroups.isEmpty() ? View.VISIBLE : View.GONE);
                 })
                 .addOnFailureListener(e -> {
                     Log.e("GroupesFragment", "Erreur lors du chargement des groupes", e);
@@ -139,8 +139,15 @@ public class GroupesFragment extends Fragment {
                                     firestore.collection("groups")
                                             .add(newGroup)
                                             .addOnSuccessListener(documentReference -> {
-                                                Toast.makeText(getContext(), "Groupe créé avec succès", Toast.LENGTH_SHORT).show();
-                                                loadUserGroups();
+                                                String groupId = documentReference.getId();
+                                                documentReference.update("id", groupId)  // <- Ajout de l'ID dans Firestore
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Toast.makeText(getContext(), "Groupe créé avec succès", Toast.LENGTH_SHORT).show();
+                                                            loadUserGroups();
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(getContext(), "Erreur lors de l'ajout de l'ID du groupe", Toast.LENGTH_SHORT).show();
+                                                        });
                                             })
                                             .addOnFailureListener(e -> {
                                                 Toast.makeText(getContext(), "Erreur lors de la création du groupe", Toast.LENGTH_SHORT).show();

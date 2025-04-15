@@ -2,21 +2,34 @@ package com.example.collabasket.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Groupes {
 
+    private String id;  // Nécessaire pour DiffUtil
     private String groupName;
-    private String creatorUid;
-    private List<String> memberIds;
+    private String ownerId;
     private List<Map<String, String>> members;
+    private List<String> memberIds;
 
-    public Groupes() {}
+    public Groupes() {
+        // Nécessaire pour Firestore
+    }
 
-    public Groupes(String groupName, String creatorUid, List<Map<String, String>> members, List<String> memberIds) {
+    public Groupes(String groupName, String ownerId, List<Map<String, String>> members, List<String> memberIds) {
         this.groupName = groupName;
-        this.creatorUid = creatorUid;
+        this.ownerId = ownerId;
         this.members = members;
         this.memberIds = memberIds;
+    }
+
+    // Getter et Setter pour l'ID Firestore
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getGroupName() {
@@ -27,12 +40,20 @@ public class Groupes {
         this.groupName = groupName;
     }
 
-    public String getCreatorUid() {
-        return creatorUid;
+    public String getOwnerId() {
+        return ownerId;
     }
 
-    public void setCreatorUid(String creatorUid) {
-        this.creatorUid = creatorUid;
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public List<Map<String, String>> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<Map<String, String>> members) {
+        this.members = members;
     }
 
     public List<String> getMemberIds() {
@@ -43,11 +64,20 @@ public class Groupes {
         this.memberIds = memberIds;
     }
 
-    public List<Map<String, String>> getMembers() {
-        return members;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Groupes)) return false;
+        Groupes groupes = (Groupes) o;
+        return Objects.equals(id, groupes.id) &&
+                Objects.equals(groupName, groupes.groupName) &&
+                Objects.equals(ownerId, groupes.ownerId) &&
+                Objects.equals(members, groupes.members) &&
+                Objects.equals(memberIds, groupes.memberIds);
     }
 
-    public void setMembers(List<Map<String, String>> members) {
-        this.members = members;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, groupName, ownerId, members, memberIds);
     }
 }
