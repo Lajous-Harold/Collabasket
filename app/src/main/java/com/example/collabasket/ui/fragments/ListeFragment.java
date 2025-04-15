@@ -116,7 +116,7 @@ public class ListeFragment extends Fragment {
                         }
 
                         if (!nom.isEmpty()) {
-                            Produit produit = new Produit(nom, categorie, quantite, unite, currentUserId);
+                            Produit produit = new Produit(nom, categorie, quantite, unite);
                             produitsRef.add(produit);
                         }
                     })
@@ -130,7 +130,6 @@ public class ListeFragment extends Fragment {
                     .whereEqualTo("categorie", produit.categorie)
                     .whereEqualTo("quantite", produit.quantite)
                     .whereEqualTo("unite", produit.unite)
-                    .whereEqualTo("userId", currentUserId)
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
                         for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
