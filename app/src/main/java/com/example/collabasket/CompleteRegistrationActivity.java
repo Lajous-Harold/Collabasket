@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.*;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -92,6 +93,7 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
                         userData.put("username", username);
                         userData.put("email", email);
                         userData.put("phone", user.getPhoneNumber());
+                        userData.put("createdAt", FieldValue.serverTimestamp());
 
                         // Préférences de notifications activées par défaut
                         Map<String, Object> defaultNotifications = new HashMap<>();
