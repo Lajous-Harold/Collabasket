@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
@@ -47,7 +48,8 @@ public class ListeGroupesFragment extends Fragment {
     private List<Contact> contactsList = new ArrayList<>();
     private ActivityResultLauncher<String> contactsPermissionLauncher;
     private TextView textEmptyList;
-
+    private static final int REQUEST_SEND_SMS = 101;
+    private List<Contact> contactsEnAttenteSms = new ArrayList<>();
     private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
     private final String[] categoriesDisponibles = {
             "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
@@ -253,36 +255,30 @@ public class ListeGroupesFragment extends Fragment {
             }
         });
 
-        // Créer et afficher le dialogue
+        // Création de la boîte de dialogue
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setView(dialogView);
         builder.setTitle("Inviter des contacts");
         builder.setPositiveButton("Inviter", (dialog, which) -> {
             List<Contact> selection = contactAdapter.getSelectedContacts();
-            // Traitement des contacts sélectionnés...
+            envoyerInvitationParSms(selection); // 💬 Méthode à définir ou déjà existante
         });
         builder.setNegativeButton("Annuler", null);
         builder.show();
     }
-    private void sendInvitation(Contact contact, String groupId) {
-        String link = FirebaseDynamicLinks.getInstance()
-                .createDynamicLink()
-                .setLink(Uri.parse("https://example.com/invite?groupId=" + groupId))
-                .setDomainUriPrefix("https://collabasket.page.link")
-                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder().build())
-                .buildDynamicLink()
-                .getUri()
-                .toString();
+    private void envoyerInvitationParSms(List<Contact> contacts) {
+        if (contacts == null || contacts.isEmpty()) return;
 
-        String message = "Rejoignez notre groupe sur Collabasket : " + link;
+        String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
+        String message = "Salut ! Rejoins notre liste de courses partagée sur Collabasket : " + lienInvitation;
 
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + contact.getPhone()));
-        if (message != null && !message.isEmpty()) {
-            intent.putExtra("sms_body", message);
+        SmsManager smsManager = SmsManager.getDefault();
+        for (Contact contact : contacts) {
+            smsManager.sendTextMessage(contact.getPhone(), null, message, null, null);
         }
-        startActivity(intent);
-    }
 
+        Toast.makeText(getContext(), "Invitations envoyées par SMS", Toast.LENGTH_SHORT).show();
+    }
     private void loadProduitsForGroup() {
         firestore.collection("groups")
                 .document(groupId)

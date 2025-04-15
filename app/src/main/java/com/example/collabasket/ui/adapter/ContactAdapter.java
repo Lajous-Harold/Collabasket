@@ -40,6 +40,8 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         holder.contactPhone.setText(contact.getPhone());
         holder.checkbox.setChecked(contact.isSelected());
 
+        holder.checkbox.setOnCheckedChangeListener(null);
+        holder.checkbox.setChecked(contact.isSelected());
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             contact.setSelected(isChecked);
             if (isChecked && !selectedContacts.contains(contact)) {
@@ -48,6 +50,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                 selectedContacts.remove(contact);
             }
         });
+
     }
 
     @Override
