@@ -5,6 +5,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
+import android.widget.Filter;
+import android.widget.Filterable;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,14 +16,15 @@ import com.example.collabasket.model.Contact;
 import java.util.ArrayList;
 import java.util.List;
 
-// ContactAdapter pour afficher la liste des contacts
-public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactViewHolder> {
+public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactViewHolder> implements Filterable {
 
-    private List<Contact> contactsList;
+    private List<Contact> originalList;
+    private List<Contact> filteredList;
     private List<Contact> selectedContacts = new ArrayList<>();
 
     public ContactAdapter(List<Contact> contacts) {
-        this.contactsList = contacts;
+        this.originalList = new ArrayList<>(contacts);
+        this.filteredList = new ArrayList<>(contacts);
     }
 
     @Override
@@ -32,17 +35,16 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
     @Override
     public void onBindViewHolder(ContactViewHolder holder, int position) {
-        Contact contact = contactsList.get(position);
+        Contact contact = filteredList.get(position);
         holder.contactName.setText(contact.getName());
         holder.contactPhone.setText(contact.getPhone());
-
         holder.checkbox.setChecked(contact.isSelected());
 
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             contact.setSelected(isChecked);
-            if (isChecked) {
+            if (isChecked && !selectedContacts.contains(contact)) {
                 selectedContacts.add(contact);
-            } else {
+            } else if (!isChecked) {
                 selectedContacts.remove(contact);
             }
         });
@@ -50,16 +52,50 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
     @Override
     public int getItemCount() {
-        return contactsList.size();
+        return filteredList.size();
     }
 
     public List<Contact> getSelectedContacts() {
         return selectedContacts;
     }
 
-    public static class ContactViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public Filter getFilter() {
+        return new Filter() {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                List<Contact> resultList = new ArrayList<>();
+                String query = constraint.toString().toLowerCase().replaceAll("\\s", "");
 
-        TextView contactName, contactPhone;
+                if (query.isEmpty()) {
+                    resultList.addAll(originalList);
+                } else {
+                    for (Contact contact : originalList) {
+                        String name = contact.getName() != null ? contact.getName().toLowerCase() : "";
+                        String phone = contact.getPhone() != null ? contact.getPhone().replaceAll("\\s", "") : "";
+                        if (name.contains(query) || phone.contains(query)) {
+                            resultList.add(contact);
+                        }
+                    }
+                }
+
+                FilterResults results = new FilterResults();
+                results.values = resultList;
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                filteredList.clear();
+                filteredList.addAll((List<Contact>) results.values);
+                notifyDataSetChanged();
+            }
+        };
+    }
+
+    public static class ContactViewHolder extends RecyclerView.ViewHolder {
+        TextView contactName;
+        TextView contactPhone;
         CheckBox checkbox;
 
         public ContactViewHolder(View itemView) {

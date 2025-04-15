@@ -14,11 +14,11 @@
         android:queryHint="Rechercher un contact..." />
 
     <!-- Liste des contacts avec sélection multiple -->
-    <ListView
-        android:id="@+id/list_contacts"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/list_contacts_recycler"
         android:layout_width="match_parent"
         android:layout_height="300dp"
-        android:choiceMode="multipleChoice"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp" />
+        android:paddingTop="8dp"
+        android:clipToPadding="false" />
+
 </LinearLayout>

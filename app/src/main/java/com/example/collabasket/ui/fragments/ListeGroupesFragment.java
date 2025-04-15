@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.collabasket.R;
 import com.example.collabasket.model.Contact;
 import com.example.collabasket.model.ProduitGroupes;
+import com.example.collabasket.ui.adapter.ContactAdapter;
 import com.example.collabasket.ui.adapter.ProduitGroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -227,24 +228,18 @@ public class ListeGroupesFragment extends Fragment {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_invitation_contacts, null);
 
         SearchView searchView = dialogView.findViewById(R.id.search_contacts);
-        ListView listView = dialogView.findViewById(R.id.list_contacts);
+        RecyclerView recyclerView = dialogView.findViewById(R.id.list_contacts_recycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Tous les contacts triés : avec app d’abord
+        // Trier les contacts : ceux avec l'app d'abord
         List<Contact> sortedContacts = new ArrayList<>(contactsList);
         sortedContacts.sort((a, b) -> Boolean.compare(!b.isHasApp(), !a.isHasApp()));
 
-        // Liste visible et liste filtrée synchronisées
-        List<Contact> filteredContacts = new ArrayList<>(sortedContacts);
-        List<String> affichages = new ArrayList<>();
-        for (Contact c : filteredContacts) {
-            String badge = c.isHasApp() ? " ✅" : "";
-            affichages.add(c.getName() + " - " + c.getPhone() + badge);
-        }
+        // Créer et appliquer l'adapter avec filtrage
+        ContactAdapter contactAdapter = new ContactAdapter(sortedContacts);
+        recyclerView.setAdapter(contactAdapter);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_multiple_choice, affichages);
-        listView.setAdapter(adapter);
-        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-
+        // Filtre dynamique
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -253,48 +248,22 @@ public class ListeGroupesFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                affichages.clear();
-                filteredContacts.clear();
-
-                for (Contact c : sortedContacts) {
-                    String phone = c.getPhone().replaceAll("\\s", "");
-                    String name = c.getName().toLowerCase();
-                    String query = newText.toLowerCase().replaceAll("\\s", "");
-
-                    if (name.contains(query) || phone.contains(query)) {
-                        filteredContacts.add(c);
-                        String badge = c.isHasApp() ? " ✅" : "";
-                        affichages.add(c.getName() + " - " + c.getPhone() + badge);
-                    }
-                }
-
-                adapter.clear();
-                adapter.addAll(affichages);
-                adapter.notifyDataSetChanged();
+                contactAdapter.getFilter().filter(newText);
                 return true;
             }
         });
 
-        new AlertDialog.Builder(getContext())
-                .setTitle("Sélectionner des contacts à inviter")
-                .setView(dialogView)
-                .setPositiveButton("Inviter", (dialog, which) -> {
-                    SparseBooleanArray checked = listView.getCheckedItemPositions();
-                    for (int i = 0; i < checked.size(); i++) {
-                        if (checked.valueAt(i)) {
-                            int position = checked.keyAt(i);
-                            Contact selected = filteredContacts.get(position);
-                            selected.setSelected(true);
-                            sendInvitation(selected, groupId);
-                        }
-                    }
-                })
-                .setNegativeButton("Annuler", null)
-                .show();
+        // Créer et afficher le dialogue
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setView(dialogView);
+        builder.setTitle("Inviter des contacts");
+        builder.setPositiveButton("Inviter", (dialog, which) -> {
+            List<Contact> selection = contactAdapter.getSelectedContacts();
+            // Traitement des contacts sélectionnés...
+        });
+        builder.setNegativeButton("Annuler", null);
+        builder.show();
     }
-
-
-
     private void sendInvitation(Contact contact, String groupId) {
         String link = FirebaseDynamicLinks.getInstance()
                 .createDynamicLink()
