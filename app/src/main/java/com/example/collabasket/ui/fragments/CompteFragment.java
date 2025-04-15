@@ -150,6 +150,15 @@ public class CompteFragment extends Fragment {
                     .commit();
         });
 
+        Button btnCGU = view.findViewById(R.id.btn_cgu);
+        btnCGU.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new CGUFragment())
+                    .addToBackStack(null)
+                    .commit();
+        });
+
         Button btnLogout = view.findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
