@@ -76,6 +76,7 @@
         <activity android:name=".PhoneVerificationActivity" />
         <activity android:name=".PhoneRegistrationActivity" />
         <activity android:name=".CompleteRegistrationActivity" />
+        <activity android:name=".InvitationHandlerActivity" />
 
     </application>
 </manifest>

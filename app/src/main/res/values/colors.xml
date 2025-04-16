@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
+    <!-- Couleurs de base -->
+    <color name="colorPrimary">#1D3557</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <!-- Couleurs secondaires -->
+    <color name="colorSecondary">#757575</color>
+    <color name="colorSuccess">#4CAF50</color>
+    <color name="colorError">#F44336</color>
+
+    <!-- Texte & fond -->
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+    <color name="grayLight">#F5F5F5</color>
+    <color name="grayMedium">#CCCCCC</color>
+    <color name="grayDark">#888888</color>
+
+    <!-- Transparence et overlays -->
+    <color name="overlayDark">#88000000</color>
+    <color name="overlayLight">#88FFFFFF</color>
 </resources>

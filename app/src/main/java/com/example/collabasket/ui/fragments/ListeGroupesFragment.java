@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.telephony.SmsManager;
@@ -29,6 +30,8 @@ import com.example.collabasket.ui.adapter.ContactAdapter;
 import com.example.collabasket.ui.adapter.ProduitGroupesAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.dynamiclinks.DynamicLink;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.*;
 
 import java.util.ArrayList;
@@ -284,25 +287,30 @@ public class ListeGroupesFragment extends Fragment {
         builder.show();
     }
     private void envoyerInvitationParSms(Contact contact) {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS)
-                != PackageManager.PERMISSION_GRANTED) {
-            contactEnCoursPourSms = contact;
-            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS);
-            return;
-        }
-
         String phone = contact.getPhone();
-        String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
-        String message = "Salut ! Rejoins notre groupe de courses \"" + groupName + "\" sur Collabasket. Voici le lien : " + lienInvitation;
 
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phone, null, message, null, null);
-            Toast.makeText(getContext(), "Invitation envoyée à " + phone, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e("SMS_INVITE", "Erreur envoi SMS : ", e);
-            Toast.makeText(getContext(), "Erreur lors de l'envoi à " + phone, Toast.LENGTH_SHORT).show();
-        }
+        FirebaseDynamicLinks.getInstance()
+                .createDynamicLink()
+                .setLink(Uri.parse("https://collabasket.page.link/invite?groupId=" + groupId))
+                .setDomainUriPrefix("https://collabasket.page.link")
+                .setAndroidParameters(new DynamicLink.AndroidParameters.Builder().build())
+                .buildShortDynamicLink()
+                .addOnSuccessListener(shortLink -> {
+                    String message = "Salut ! Rejoins notre groupe de courses " + groupName + " sur Collabasket. Voici le lien : " + shortLink.getShortLink();
+
+                    try {
+                        SmsManager smsManager = SmsManager.getDefault();
+                        smsManager.sendTextMessage(phone, null, message, null, null);
+                        Toast.makeText(getContext(), "Invitation envoyée à " + phone, Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.e("SMS_INVITE", "Erreur envoi SMS : ", e);
+                        Toast.makeText(getContext(), "Erreur lors de l'envoi à " + phone, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("DYNAMIC_LINK", "Erreur lors de la création du lien : ", e);
+                    Toast.makeText(getContext(), "Échec de la génération du lien", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void loadProduitsForGroup() {
