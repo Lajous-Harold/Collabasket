@@ -3,7 +3,6 @@
 Classe associée : InfoGroupeFragment
 Utilité : Affiche le nom du groupe, les membres avec nom + numéro, et permettra la gestion des permissions.
 -->
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -51,14 +50,17 @@ Utilité : Affiche le nom du groupe, les membres avec nom + numéro, et permettr
             android:textSize="16sp"
             android:layout_marginBottom="8dp" />
 
-        <!-- Conteneur des membres -->
+        <!-- Conteneur des membres avec séparation -->
         <LinearLayout
             android:id="@+id/layout_membres"
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:divider="?android:attr/dividerHorizontal"
+            android:showDividers="middle"
+            android:dividerPadding="8dp" />
 
-        <!-- Bouton Quitter-->
+        <!-- Bouton Quitter -->
         <Button
             android:id="@+id/btn_quitter_groupe"
             android:layout_width="wrap_content"

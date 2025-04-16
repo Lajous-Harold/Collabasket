@@ -91,7 +91,8 @@ public class InfoGroupeFragment extends Fragment {
                             textView.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
                             ligne.addView(textView);
 
-                            if (!currentUserId.equals(userId) && ("Propriétaire".equals(currentUserRole) || ("Administrateur".equals(currentUserRole) && "Membre".equals(role)))) {
+                            if (!currentUserId.equals(userId) &&
+                                    ("Propriétaire".equals(currentUserRole) || ("Administrateur".equals(currentUserRole) && "Membre".equals(role)))) {
                                 Button btnModifier = new Button(getContext());
                                 btnModifier.setText("Modifier");
                                 btnModifier.setOnClickListener(v -> afficherDialogueRole(userId, username, role));
@@ -127,7 +128,7 @@ public class InfoGroupeFragment extends Fragment {
                                 .setTitle("Transférer la propriété")
                                 .setMessage("Êtes-vous sûr de transférer la propriété à " + username + " ? Vous deviendrez administrateur.")
                                 .setPositiveButton("Confirmer", (d, w) -> {
-                                    GroupesUtils.transfererPropriete(groupId, currentUserId, userId);
+                                    GroupesUtils.transfererPropriete(groupId, userId, currentUserId);
                                     chargerInfosGroupe();
                                 })
                                 .setNegativeButton("Annuler", null)
