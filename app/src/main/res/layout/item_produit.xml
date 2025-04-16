@@ -1,52 +1,73 @@
-<!--
-Classe associée : ProduitAdapter
-Utilité : Affiche un produit dans la liste personnelle de l’utilisateur.
--->
-
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="8dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:elevation="4dp"
+    android:foreground="?attr/selectableItemBackground">
 
-    <CheckBox
-        android:id="@+id/checkbox_produit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:padding="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/nom_produit"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Nom"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        app:layout_constraintStart_toEndOf="@id/checkbox_produit"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btn_supprimer"
-        android:paddingStart="8dp"/>
+        <!-- Case à cocher -->
+        <CheckBox
+            android:id="@+id/checkbox_produit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-    <TextView
-        android:id="@+id/categorie_produit"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Catégorie"
-        android:textSize="14sp"
-        app:layout_constraintStart_toStartOf="@id/nom_produit"
-        app:layout_constraintTop_toBottomOf="@id/nom_produit"
-        app:layout_constraintEnd_toEndOf="@id/nom_produit" />
+        <!-- Contenu principal -->
+        <LinearLayout
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
 
-    <ImageButton
-        android:id="@+id/btn_supprimer"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_delete"
-        android:contentDescription="Supprimer"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/nom_produit"
+                android:text="2 L de Lait"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/categorie_produit"
+                android:text="Boissons"
+                android:textSize="14sp"
+                android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <!-- Bouton Acheté (invisible par défaut) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_achete"
+            android:text="Acheté"
+            android:layout_marginEnd="8dp"
+            android:visibility="gone"
+            android:textSize="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/CollabasketAcheteButton" />
+
+        <!-- Corbeille visible en permanence -->
+        <ImageButton
+            android:id="@+id/btn_supprimer"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="Supprimer"
+            android:background="@null"
+            app:tint="@android:color/holo_red_dark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

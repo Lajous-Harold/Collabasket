@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -45,7 +46,6 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
     public void onBindViewHolder(@NonNull ProduitViewHolder holder, int position) {
         Produit current = produits.get(position);
 
-        // Format affichage : "400 g de riz"
         String quantiteFormatee = (current.quantite % 1 == 0)
                 ? String.valueOf((int) current.quantite)
                 : String.valueOf(current.quantite);
@@ -57,13 +57,12 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
 
         if (current.coche) {
             holder.nomTextView.setPaintFlags(holder.nomTextView.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-            holder.btnSupprimer.setVisibility(View.VISIBLE);
+            holder.btnAchete.setVisibility(View.VISIBLE);
         } else {
             holder.nomTextView.setPaintFlags(holder.nomTextView.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-            holder.btnSupprimer.setVisibility(View.GONE);
+            holder.btnAchete.setVisibility(View.GONE);
         }
 
-        // Mise à jour coche dans /users/{uid}/produits
         holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             current.coche = isChecked;
             notifyItemChanged(position);
@@ -107,6 +106,7 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
         private final TextView categorieTextView;
         private final CheckBox checkBox;
         private final ImageButton btnSupprimer;
+        private final Button btnAchete;
 
         public ProduitViewHolder(View itemView) {
             super(itemView);
@@ -114,6 +114,7 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
             categorieTextView = itemView.findViewById(R.id.categorie_produit);
             checkBox = itemView.findViewById(R.id.checkbox_produit);
             btnSupprimer = itemView.findViewById(R.id.btn_supprimer);
+            btnAchete = itemView.findViewById(R.id.btn_achete);
         }
     }
 }

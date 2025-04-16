@@ -13,4 +13,14 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="CollabasketAcheteButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="backgroundTint">@android:color/holo_green_dark</item>
+        <item name="cornerRadius">32dp</item>
+        <item name="android:minHeight">32dp</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+    </style>
+
+
 </resources>
