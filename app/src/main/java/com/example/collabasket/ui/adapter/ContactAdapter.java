@@ -4,9 +4,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.TextView;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,6 +14,8 @@ import com.example.collabasket.R;
 import com.example.collabasket.model.Contact;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactViewHolder> implements Filterable {
@@ -25,6 +27,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     public ContactAdapter(List<Contact> contacts) {
         this.originalList = new ArrayList<>(contacts);
         this.filteredList = new ArrayList<>(contacts);
+        sortFilteredList();
     }
 
     @Override
@@ -36,12 +39,11 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     @Override
     public void onBindViewHolder(ContactViewHolder holder, int position) {
         Contact contact = filteredList.get(position);
-        holder.contactName.setText(contact.getName());
+        holder.contactName.setText(contact.getName() + (contact.isHasApp() ? "  ✔" : ""));
         holder.contactPhone.setText(contact.getPhone());
-        holder.checkbox.setChecked(contact.isSelected());
-
         holder.checkbox.setOnCheckedChangeListener(null);
         holder.checkbox.setChecked(contact.isSelected());
+
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             contact.setSelected(isChecked);
             if (isChecked && !selectedContacts.contains(contact)) {
@@ -50,7 +52,6 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                 selectedContacts.remove(contact);
             }
         });
-
     }
 
     @Override
@@ -60,6 +61,10 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
     public List<Contact> getSelectedContacts() {
         return selectedContacts;
+    }
+
+    private void sortFilteredList() {
+        Collections.sort(filteredList, Comparator.comparing(Contact::isHasApp).reversed());
     }
 
     @Override
@@ -91,6 +96,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 filteredList.clear();
                 filteredList.addAll((List<Contact>) results.values);
+                sortFilteredList();
                 notifyDataSetChanged();
             }
         };

@@ -44,9 +44,9 @@ public class ListeGroupesFragment extends Fragment {
     private RecyclerView recyclerView;
     private List<Contact> contactsList = new ArrayList<>();
     private ActivityResultLauncher<String> contactsPermissionLauncher;
+    private ActivityResultLauncher<String> smsPermissionLauncher;
+    private Contact contactEnCoursPourSms;
     private TextView textEmptyList;
-    private static final int REQUEST_SEND_SMS = 101;
-    private List<Contact> contactsEnAttenteSms = new ArrayList<>();
     private final String[] unitesDisponibles = { "pcs", "g", "kg", "ml", "L" };
     private final String[] categoriesDisponibles = {
             "Fruits et légumes", "Viandes et poissons", "Produits laitiers", "Boulangerie",
@@ -74,6 +74,18 @@ public class ListeGroupesFragment extends Fragment {
                     }
                 }
         );
+        smsPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted && contactEnCoursPourSms != null) {
+                        envoyerInvitationParSms(contactEnCoursPourSms);
+                        contactEnCoursPourSms = null;
+                    } else {
+                        Toast.makeText(getContext(), "Permission SMS refusée", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
 
         TextView titre = rootView.findViewById(R.id.text_group_title);
         textEmptyList = rootView.findViewById(R.id.text_empty_list);
@@ -238,76 +250,61 @@ public class ListeGroupesFragment extends Fragment {
     private void showContactInviteDialog() {
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_invitation_contacts, null);
 
-        SearchView searchView = dialogView.findViewById(R.id.search_contacts);
-        RecyclerView recyclerView = dialogView.findViewById(R.id.list_contacts_recycler);
+        EditText searchField = dialogView.findViewById(R.id.edit_recherche_contact);
+        RecyclerView recyclerView = dialogView.findViewById(R.id.recycler_contacts);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Trier les contacts : ceux avec l'app d'abord
+        // Trier les contacts : avec app d'abord
         List<Contact> sortedContacts = new ArrayList<>(contactsList);
         sortedContacts.sort((a, b) -> Boolean.compare(!b.isHasApp(), !a.isHasApp()));
 
-        // Créer et appliquer l'adapter avec filtrage
         ContactAdapter contactAdapter = new ContactAdapter(sortedContacts);
         recyclerView.setAdapter(contactAdapter);
 
-        // Filtre dynamique
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
+        searchField.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                contactAdapter.getFilter().filter(s.toString());
             }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                contactAdapter.getFilter().filter(newText);
-                return true;
-            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        // Création de la boîte de dialogue
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setView(dialogView);
         builder.setTitle("Inviter des contacts");
+
         builder.setPositiveButton("Inviter", (dialog, which) -> {
             List<Contact> selection = contactAdapter.getSelectedContacts();
-            envoyerInvitationParSms(selection); // 💬 Méthode à définir ou déjà existante
+            for (Contact contact : selection) {
+                envoyerInvitationParSms(contact);
+            }
         });
+
         builder.setNegativeButton("Annuler", null);
         builder.show();
     }
-    private void envoyerInvitationParSms(List<Contact> contacts) {
+    private void envoyerInvitationParSms(Contact contact) {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS)
-                == PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED) {
+            contactEnCoursPourSms = contact;
+            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS);
+            return;
+        }
 
-            String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
-            String message = "Salut ! Rejoins notre liste de courses partagée sur Collabasket : " + lienInvitation;
+        String phone = contact.getPhone();
+        String lienInvitation = "https://collabasket.app/invite?groupId=" + groupId;
+        String message = "Salut ! Rejoins notre groupe de courses \"" + groupName + "\" sur Collabasket. Voici le lien : " + lienInvitation;
 
+        try {
             SmsManager smsManager = SmsManager.getDefault();
-            for (Contact contact : contacts) {
-                String numero = contact.getPhone();
-                if (numero != null && !numero.isEmpty()) {
-                    smsManager.sendTextMessage(numero, null, message, null, null);
-                }
-            }
-
-            Toast.makeText(getContext(), "Invitations envoyées par SMS", Toast.LENGTH_SHORT).show();
-
-        } else {
-            contactsEnAttenteSms = contacts;
-            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, REQUEST_SEND_SMS);
+            smsManager.sendTextMessage(phone, null, message, null, null);
+            Toast.makeText(getContext(), "Invitation envoyée à " + phone, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e("SMS_INVITE", "Erreur envoi SMS : ", e);
+            Toast.makeText(getContext(), "Erreur lors de l'envoi à " + phone, Toast.LENGTH_SHORT).show();
         }
     }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_SEND_SMS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                envoyerInvitationParSms(contactsEnAttenteSms);
-            } else {
-                Toast.makeText(getContext(), "Permission SMS refusée", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
+
     private void loadProduitsForGroup() {
         firestore.collection("groups")
                 .document(groupId)
