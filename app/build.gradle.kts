@@ -7,6 +7,29 @@ android {
     namespace = "com.example.collabasket"
     compileSdk = 35
 
+    signingConfigs{
+        // Configuration pour les TESTS (utilise le keystore partagé)
+        create("testRelease") {
+            storeFile = file("test.keystore") // Chemin relatif
+            storePassword = project.properties["STORE_PASSWORD"] as String
+            keyAlias = "TestKey"
+            keyPassword = project.properties["KEY_PASSWORD"] as String
+        }
+        // Configuration debug par défaut (pour le développement local)
+        getByName("debug") {
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false // Désactivé pour les tests
+            signingConfig = signingConfigs.getByName("testRelease")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.collabasket"
         minSdk = 24
@@ -17,15 +40,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
