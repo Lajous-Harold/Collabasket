@@ -7,6 +7,10 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,8 +45,31 @@ public class HistoriquePersoFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         View view = inflater.inflate(R.layout.fragment_historique, container, false);
+
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_historique, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem item) {
+                if (item.getItemId() == R.id.action_vider_historique) {
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Confirmation")
+                            .setMessage("Voulez-vous vraiment supprimer tout l'historique ?")
+                            .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
+                            .setNegativeButton("Annuler", null)
+                            .show();
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
 
         searchView = view.findViewById(R.id.search_view);
         spinnerTri = view.findViewById(R.id.spinner_tri);
@@ -101,26 +128,6 @@ public class HistoriquePersoFragment extends Fragment {
         }, () -> {
             Toast.makeText(getContext(), "Erreur lors du chargement de l'historique", Toast.LENGTH_SHORT).show();
         });
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_historique, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_vider_historique) {
-            new android.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Confirmation")
-                    .setMessage("Voulez-vous vraiment supprimer tout l'historique ?")
-                    .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
-                    .setNegativeButton("Annuler", null)
-                    .show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void viderHistorique() {

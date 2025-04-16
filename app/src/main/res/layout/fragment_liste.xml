@@ -1,39 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-Classe associée : ListeFragment
-Utilité : Affiche la liste de courses personnelle de l’utilisateur (hors groupe).
--->
-
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_produits"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp" />
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:title="Ma liste"
+        app:titleTextColor="@android:color/white" />
 
     <TextView
         android:id="@+id/text_empty_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Votre liste est vide"
-        android:textColor="@android:color/darker_gray"
-        android:textAlignment="center"
+        android:text="Votre liste est vide."
         android:textSize="16sp"
+        android:gravity="center"
         android:visibility="gone"
-        android:layout_marginTop="32dp"/>
+        android:padding="16dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_produits"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_ajouter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginBottom="120dp"
-        android:layout_marginRight="24dp"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="16dp"
         android:contentDescription="Ajouter un produit"
-        android:src="@android:drawable/ic_input_add" />
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+        app:srcCompat="@android:drawable/ic_input_add" />
+
+</LinearLayout>

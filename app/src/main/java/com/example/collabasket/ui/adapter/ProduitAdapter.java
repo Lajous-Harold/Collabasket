@@ -8,6 +8,7 @@ import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -87,6 +88,22 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
 
         holder.btnAchete.setOnClickListener(v -> {
             HistoriqueUtils.ajouterProduitSiAbsent(current);
+
+            String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(uid)
+                    .collection("produits")
+                    .whereEqualTo("nom", current.nom)
+                    .whereEqualTo("categorie", current.categorie)
+                    .whereEqualTo("quantite", current.quantite)
+                    .whereEqualTo("unite", current.unite)
+                    .get()
+                    .addOnSuccessListener(query -> {
+                        for (QueryDocumentSnapshot doc : query) {
+                            doc.getReference().delete();
+                        }
+                    });
         });
 
         holder.btnSupprimer.setOnClickListener(v -> {

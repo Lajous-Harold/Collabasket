@@ -3,13 +3,14 @@ package com.example.collabasket.ui.fragments;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,6 +47,29 @@ public class ListeFragment extends Fragment {
         Log.d("DEBUG_STARTUP", "ListeFragment onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_liste, container, false);
+
+        Toolbar toolbar = rootView.findViewById(R.id.toolbar);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.menu_liste, menu);
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem item) {
+                if (item.getItemId() == R.id.action_voir_historique) {
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, new HistoriquePersoFragment())
+                            .addToBackStack(null)
+                            .commit();
+                    return true;
+                }
+                return false;
+            }
+        }, getViewLifecycleOwner());
 
         RecyclerView recyclerView = rootView.findViewById(R.id.recycler_view_produits);
         textEmptyList = rootView.findViewById(R.id.text_empty_list);
