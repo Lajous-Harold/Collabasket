@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
+import com.example.collabasket.utils.HistoriqueUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -82,6 +83,10 @@ public class ProduitAdapter extends RecyclerView.Adapter<ProduitAdapter.ProduitV
                             doc.getReference().update("coche", isChecked);
                         }
                     });
+        });
+
+        holder.btnAchete.setOnClickListener(v -> {
+            HistoriqueUtils.ajouterProduitSiAbsent(current);
         });
 
         holder.btnSupprimer.setOnClickListener(v -> {

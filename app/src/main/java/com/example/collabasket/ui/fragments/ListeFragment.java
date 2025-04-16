@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.collabasket.R;
 import com.example.collabasket.model.Produit;
 import com.example.collabasket.ui.adapter.ProduitAdapter;
+import com.example.collabasket.utils.HistoriqueUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
@@ -60,7 +61,6 @@ public class ListeFragment extends Fragment {
                 .document(currentUserId)
                 .collection("produits");
 
-        // 🔄 Synchronisation des produits personnels
         produitsRef.addSnapshotListener((value, error) -> {
             if (error != null) {
                 Log.e("FIRESTORE", "Erreur d'écoute Firestore : ", error);
@@ -74,7 +74,6 @@ public class ListeFragment extends Fragment {
                 }
                 adapter.setProduits(produits);
 
-                // Afficher ou masquer le message de liste vide
                 if (textEmptyList != null) {
                     textEmptyList.setVisibility(produits.isEmpty() ? View.VISIBLE : View.GONE);
                 }
@@ -132,6 +131,7 @@ public class ListeFragment extends Fragment {
                     .whereEqualTo("unite", produit.unite)
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
+                        HistoriqueUtils.ajouterProduitSiAbsent(produit);
                         for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                             doc.getReference().delete();
                         }
