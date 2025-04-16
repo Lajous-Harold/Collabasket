@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.collabasket.R;
+import com.example.collabasket.utils.GroupesUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 
@@ -49,7 +50,7 @@ public class InfoGroupeFragment extends Fragment {
         currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         if (getArguments() != null) {
-            groupId = getArguments() != null && getArguments().containsKey("groupId") ? getArguments().getString("groupId") : "";
+            groupId = getArguments().getString("groupId", "");
         }
 
         chargerInfosGroupe();
@@ -63,174 +64,87 @@ public class InfoGroupeFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String nom = documentSnapshot.contains("groupName") ? documentSnapshot.getString("groupName") : "";
-                        nomGroupe.setText(nom != null ? nom : "Groupe");
+                        nomGroupe.setText(documentSnapshot.getString("groupName"));
 
                         List<Map<String, Object>> membres = (List<Map<String, Object>>) documentSnapshot.get("members");
-                        if (membres != null) {
-                            listeMembres.removeAllViews();
+                        listeMembres.removeAllViews();
 
-                            for (Map<String, Object> membre : membres) {
-                                if (membre.containsKey("userId") && currentUserId.equals(membre.get("userId"))) {
-                                    Object role = membre.get("role");
-                                    currentUserRole = role instanceof String ? (String) role : "Membre";
-                                    break;
-                                }
+                        for (Map<String, Object> membre : membres) {
+                            if (currentUserId.equals(membre.get("userId"))) {
+                                currentUserRole = (String) membre.get("role");
+                                break;
+                            }
+                        }
+
+                        for (Map<String, Object> membre : membres) {
+                            String userId = (String) membre.get("userId");
+                            String username = (String) membre.get("userName");
+                            String numero = (String) membre.get("numero");
+                            String role = (String) membre.get("role");
+
+                            LinearLayout ligne = new LinearLayout(getContext());
+                            ligne.setOrientation(LinearLayout.HORIZONTAL);
+                            ligne.setPadding(0, 8, 0, 8);
+
+                            TextView textView = new TextView(getContext());
+                            textView.setText(username + " - " + numero + " [" + role + "]");
+                            textView.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                            ligne.addView(textView);
+
+                            if (!currentUserId.equals(userId) && ("Propriétaire".equals(currentUserRole) || ("Administrateur".equals(currentUserRole) && "Membre".equals(role)))) {
+                                Button btnModifier = new Button(getContext());
+                                btnModifier.setText("Modifier");
+                                btnModifier.setOnClickListener(v -> afficherDialogueRole(userId, username, role));
+                                ligne.addView(btnModifier);
                             }
 
-                            for (Map<String, Object> membre : membres) {
-                                String username = membre.containsKey("userName") && membre.get("userName") instanceof String ? (String) membre.get("userName") : "Inconnu";
-                                String numero = membre.containsKey("numero") && membre.get("numero") instanceof String ? (String) membre.get("numero") : "Inconnu";
-                                String role = membre.containsKey("role") && membre.get("role") instanceof String ? (String) membre.get("role") : "Membre";
+                            listeMembres.addView(ligne);
+                        }
 
-                                // Affichage des rôles avec les nouveaux noms
-                                String roleLabel = "";
-                                if ("Propriétaire".equals(role)) {
-                                    roleLabel = "Propriétaire";
-                                } else if ("Administrateur".equals(role)) {
-                                    roleLabel = "Administrateur";
-                                } else {
-                                    roleLabel = "Membre";
-                                }
-
-                                LinearLayout ligne = new LinearLayout(getContext());
-                                ligne.setOrientation(LinearLayout.HORIZONTAL);
-                                ligne.setPadding(0, 8, 0, 8);
-                                ligne.setLayoutParams(new LinearLayout.LayoutParams(
-                                        LinearLayout.LayoutParams.MATCH_PARENT,
-                                        LinearLayout.LayoutParams.WRAP_CONTENT));
-
-                                TextView textView = new TextView(getContext());
-                                textView.setText(username + " - " + numero + " [" + roleLabel + "]");
-                                textView.setLayoutParams(new LinearLayout.LayoutParams(
-                                        0,
-                                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                                        1f));
-
-                                ligne.addView(textView);
-
-                                // Afficher les options pour "Propriétaire" ou "Administrateur"
-                                if (currentUserRole != null
-                                        && (currentUserRole.equals("Propriétaire") || currentUserRole.equals("Administrateur"))
-                                        && !currentUserId.equals(membre.get("userId"))) {
-
-                                    Button btnEdit = new Button(getContext());
-                                    btnEdit.setText("Modifier");
-                                    btnEdit.setTextSize(12f);
-                                    btnEdit.setOnClickListener(v -> {
-                                        String[] roles = {"Membre", "Administrateur"};
-                                        int checkedItem = role.equals("Administrateur") ? 1 : 0;
-
-                                        new AlertDialog.Builder(getContext())
-                                                .setTitle("Changer le rôle de " + username)
-                                                .setSingleChoiceItems(roles, checkedItem, null)
-                                                .setPositiveButton("Valider", (dialog, which) -> {
-                                                    ListView lw = ((AlertDialog) dialog).getListView();
-                                                    String selectedRole = lw.getCheckedItemPosition() == 1 ? "Administrateur" : "Membre";
-
-                                                    FirebaseFirestore.getInstance()
-                                                            .collection("groups")
-                                                            .document(groupId)
-                                                            .get()
-                                                            .addOnSuccessListener(snapshot -> {
-                                                                List<Map<String, Object>> updatedMembres =
-                                                                        (List<Map<String, Object>>) snapshot.get("members");
-
-                                                                if (updatedMembres != null) {
-                                                                    for (Map<String, Object> m : updatedMembres) {
-                                                                        if (m.get("userId") != null &&
-                                                                                m.get("userId").toString().equals(membre.get("userId").toString())) {
-                                                                            m.put("role", selectedRole);
-                                                                            break;
-                                                                        }
-                                                                    }
-
-                                                                    FirebaseFirestore.getInstance()
-                                                                            .collection("groups")
-                                                                            .document(groupId)
-                                                                            .update("members", updatedMembres)
-                                                                            .addOnSuccessListener(u -> {
-                                                                                Toast.makeText(getContext(), "Rôle mis à jour", Toast.LENGTH_SHORT).show();
-                                                                                chargerInfosGroupe();
-                                                                            });
-                                                                }
-                                                            });
-                                                })
-                                                .setNegativeButton("Annuler", null)
-                                                .show();
-                                    });
-
-                                    ligne.addView(btnEdit);
-                                }
-
-                                listeMembres.addView(ligne);
-                            }
-
-                            // Si l'utilisateur est Propriétaire, on affiche le bouton "Supprimer"
-                            if ("Propriétaire".equals(currentUserRole)) {
-                                btnSupprimer.setVisibility(View.VISIBLE);
-                                btnSupprimer.setOnClickListener(v -> {
-                                    new AlertDialog.Builder(getContext())
-                                            .setTitle("Supprimer le groupe")
-                                            .setMessage("Êtes-vous sûr de vouloir supprimer ce groupe ? Cette action est irréversible.")
-                                            .setPositiveButton("Supprimer", (dialog, which) -> {
-                                                FirebaseFirestore.getInstance()
-                                                        .collection("groups")
-                                                        .document(groupId)
-                                                        .delete()
-                                                        .addOnSuccessListener(aVoid -> {
-                                                            Toast.makeText(getContext(), "Groupe supprimé", Toast.LENGTH_SHORT).show();
-                                                            requireActivity().getSupportFragmentManager()
-                                                                    .beginTransaction()
-                                                                    .replace(R.id.fragment_container, new GroupesFragment())
-                                                                    .commit();
-                                                        })
-                                                        .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la suppression", Toast.LENGTH_SHORT).show());
-                                            })
-                                            .setNegativeButton("Annuler", null)
-                                            .show();
-                                });
-                            }
-
-                            // Si l'utilisateur est Membre ou Administrateur, on affiche le bouton "Quitter"
-                            if ("Membre".equals(currentUserRole) || "Administrateur".equals(currentUserRole)) {
-                                btnQuitter.setVisibility(View.VISIBLE);
-                                btnQuitter.setOnClickListener(v -> {
-                                    new AlertDialog.Builder(getContext())
-                                            .setTitle("Quitter le groupe")
-                                            .setMessage("Souhaitez-vous vraiment quitter ce groupe ?")
-                                            .setPositiveButton("Oui", (dialog, which) -> {
-                                                // Retirer l'utilisateur du groupe
-                                                FirebaseFirestore.getInstance()
-                                                        .collection("groups")
-                                                        .document(groupId)
-                                                        .get()
-                                                        .addOnSuccessListener(snapshot -> {
-                                                            List<Map<String, Object>> members = (List<Map<String, Object>>) snapshot.get("members");
-                                                            List<String> memberIds = (List<String>) snapshot.get("memberIds");
-
-                                                            members.removeIf(m -> currentUserId.equals(m.get("userId")));
-                                                            memberIds.removeIf(id1 -> id1.equals(currentUserId));
-
-                                                            FirebaseFirestore.getInstance()
-                                                                    .collection("groups")
-                                                                    .document(groupId)
-                                                                    .update("members", members, "memberIds", memberIds)
-                                                                    .addOnSuccessListener(aVoid -> {
-                                                                        Toast.makeText(getContext(), "Vous avez quitté le groupe", Toast.LENGTH_SHORT).show();
-                                                                        requireActivity().getSupportFragmentManager()
-                                                                                .beginTransaction()
-                                                                                .replace(R.id.fragment_container, new GroupesFragment())
-                                                                                .commit();
-                                                                    });
-                                                        });
-                                            })
-                                            .setNegativeButton("Annuler", null)
-                                            .show();
-                                });
-                            }
+                        if ("Propriétaire".equals(currentUserRole)) {
+                            btnSupprimer.setVisibility(View.VISIBLE);
+                            btnSupprimer.setOnClickListener(v -> GroupesUtils.supprimerGroupe(getContext(), groupId));
+                        } else {
+                            btnQuitter.setVisibility(View.VISIBLE);
+                            btnQuitter.setOnClickListener(v -> GroupesUtils.quitterGroupe(getContext(), groupId, currentUserId));
                         }
                     }
                 });
+    }
+
+    private void afficherDialogueRole(String userId, String username, String roleActuel) {
+        String[] roles = {"Membre", "Administrateur", "Propriétaire"};
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Changer le rôle de " + username)
+                .setSingleChoiceItems(roles, getRoleIndex(roleActuel, roles), null)
+                .setPositiveButton("Valider", (dialog, which) -> {
+                    ListView lw = ((AlertDialog) dialog).getListView();
+                    String selectedRole = roles[lw.getCheckedItemPosition()];
+
+                    if ("Propriétaire".equals(selectedRole) && "Propriétaire".equals(currentUserRole)) {
+                        new AlertDialog.Builder(getContext())
+                                .setTitle("Transférer la propriété")
+                                .setMessage("Êtes-vous sûr de transférer la propriété à " + username + " ? Vous deviendrez administrateur.")
+                                .setPositiveButton("Confirmer", (d, w) -> {
+                                    GroupesUtils.transfererPropriete(groupId, currentUserId, userId);
+                                    chargerInfosGroupe();
+                                })
+                                .setNegativeButton("Annuler", null)
+                                .show();
+                    } else {
+                        GroupesUtils.modifierRole(groupId, userId, selectedRole);
+                        chargerInfosGroupe();
+                    }
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
+    }
+
+    private int getRoleIndex(String role, String[] roles) {
+        for (int i = 0; i < roles.length; i++) {
+            if (roles[i].equals(role)) return i;
+        }
+        return 0;
     }
 }

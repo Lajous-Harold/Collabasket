@@ -1,13 +1,13 @@
 package com.example.collabasket.model;
 
 public class ProduitGroupes {
-    private String nom;
-    private String categorie;
-    private float quantite;
-    private String unite;
-    private String groupId;
-    private String ajoutePar;
-    private boolean coche;
+    protected String nom;
+    protected String categorie;
+    protected float quantite;
+    protected String unite;
+    protected String groupId;
+    protected String ajoutePar;
+    protected boolean coche;
 
     public ProduitGroupes() {}
 
