@@ -8,7 +8,6 @@ import android.util.Patterns;
 import android.widget.*;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.*;
@@ -60,6 +59,7 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
         String email = editEmail.getText().toString().trim();
         String password = editPassword.getText().toString();
         String confirmPassword = editConfirmPassword.getText().toString();
+        String verifiedPhone = getIntent().getStringExtra("verifiedPhone");
 
         if (TextUtils.isEmpty(username)) {
             editUsername.setError("Nom requis");
@@ -86,39 +86,35 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
                 .addOnSuccessListener(linked -> {
                     FirebaseUser user = linked.getUser();
                     if (user != null) {
-                        user.sendEmailVerification();
+                        user.sendEmailVerification().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("uid", user.getUid());
+                                userData.put("username", username);
+                                userData.put("email", email);
+                                userData.put("phone", verifiedPhone);
+                                userData.put("createdAt", FieldValue.serverTimestamp());
 
-                        Map<String, Object> userData = new HashMap<>();
-                        userData.put("uid", user.getUid());
-                        userData.put("username", username);
-                        userData.put("email", email);
-                        userData.put("phone", user.getPhoneNumber());
-                        userData.put("createdAt", FieldValue.serverTimestamp());
+                                Map<String, Object> defaultNotifications = new HashMap<>();
+                                defaultNotifications.put("global", true);
+                                defaultNotifications.put("produitAjoute", true);
+                                defaultNotifications.put("produitSupprime", true);
+                                defaultNotifications.put("membreAjoute", true);
+                                defaultNotifications.put("groupeCree", true);
 
-                        // Préférences de notifications activées par défaut
-                        Map<String, Object> defaultNotifications = new HashMap<>();
-                        defaultNotifications.put("global", true);
-                        defaultNotifications.put("produitAjoute", true);
-                        defaultNotifications.put("produitSupprime", true);
-                        defaultNotifications.put("membreAjoute", true);
-                        defaultNotifications.put("groupeCree", true);
+                                userData.put("notificationsSettings", defaultNotifications);
 
-                        userData.put("notificationsSettings", defaultNotifications);
-
-                        firestore.collection("users").document(user.getUid())
-                                .set(userData)
-                                .addOnSuccessListener(unused -> {
-                                    new AlertDialog.Builder(this)
-                                            .setTitle("Inscription réussie")
-                                            .setMessage("Votre compte a bien été créé.\n\nUn email de vérification a été envoyé à " + email + ".")
-                                            .setPositiveButton("Se connecter", (dialog, which) -> {
-                                                startActivity(new Intent(this, LoginActivity.class));
-                                                finish();
-                                            })
-                                            .setCancelable(false)
-                                            .show();
-                                });
-
+                                firestore.collection("users").document(user.getUid())
+                                        .set(userData)
+                                        .addOnSuccessListener(unused -> {
+                                            Toast.makeText(this, "Email de vérification envoyé à " + email, Toast.LENGTH_LONG).show();
+                                            startActivity(new Intent(this, LoginActivity.class));
+                                            finish();
+                                        });
+                            } else {
+                                Toast.makeText(this, "Erreur lors de l'envoi de l'email", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 })
                 .addOnFailureListener(e -> {
