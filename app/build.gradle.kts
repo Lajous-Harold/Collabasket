@@ -7,22 +7,22 @@ android {
     namespace = "com.example.collabasket"
     compileSdk = 35
 
-    signingConfigs{
-        // Configuration pour les TESTS (utilise le keystore partagé)
-        create("testRelease") {
-            storeFile = file("test.keystore") // Chemin relatif
+    signingConfigs {
+        create("testKeystore") {
+            storeFile = file("test.keystore.jks")
             storePassword = project.properties["STORE_PASSWORD"] as String
             keyAlias = "TestKey"
             keyPassword = project.properties["KEY_PASSWORD"] as String
         }
-        // Configuration debug par défaut (pour le développement local)
-        getByName("debug") {
-        }
     }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("testKeystore")
+        }
         release {
-            isMinifyEnabled = false // Désactivé pour les tests
-            signingConfig = signingConfigs.getByName("testRelease")
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("testKeystore")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -47,7 +47,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -62,9 +61,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
 
     implementation("com.hbb20:ccp:2.7.1")
-    implementation ("com.google.firebase:firebase-dynamic-links:20.1.0")
-    implementation ("com.google.firebase:firebase-messaging:23.4.1")
-
-
+    implementation("com.google.firebase:firebase-dynamic-links:20.1.0")
+    implementation("com.google.firebase:firebase-messaging:23.4.1")
 }
+
 apply(plugin = "com.google.gms.google-services")
