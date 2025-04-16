@@ -33,9 +33,10 @@
         android:id="@+id/fab_ajouter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
-        android:layout_margin="16dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="120dp"
+        android:layout_marginRight="24dp"
         android:contentDescription="Ajouter un produit"
-        app:srcCompat="@android:drawable/ic_input_add" />
+        android:src="@android:drawable/ic_input_add" />
 
 </LinearLayout>

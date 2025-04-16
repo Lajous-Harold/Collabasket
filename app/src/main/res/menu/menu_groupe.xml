@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/menu_ajouter_membre"
         android:title="Ajouter des membres" />
     <item
         android:id="@+id/menu_info_groupe"
         android:title="Info groupe" />
+    <item
+        android:id="@+id/action_historique_groupe"
+        android:title="Historique du groupe"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        app:showAsAction="never"/>
     <item
         android:id="@+id/menu_quitter_groupe"
         android:title="Quitter" />

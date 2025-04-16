@@ -115,6 +115,18 @@ public class ListeGroupesFragment extends Fragment {
                             .addToBackStack(null)
                             .commit();
                     return true;
+                } else if (id == R.id.action_historique_groupe) {
+                    HistoriqueGroupeFragment historiqueFragment = new HistoriqueGroupeFragment();
+                    Bundle args = new Bundle();
+                    args.putString("groupId", groupId);
+                    historiqueFragment.setArguments(args);
+
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, historiqueFragment)
+                            .addToBackStack(null)
+                            .commit();
+                    return true;
                 } else if (id == R.id.menu_quitter_groupe) {
                     quitterGroupe();
                     return true;

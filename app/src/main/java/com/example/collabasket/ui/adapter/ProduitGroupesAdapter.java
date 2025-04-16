@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.collabasket.R;
 import com.example.collabasket.model.ProduitGroupes;
+import com.example.collabasket.model.ProduitGroupesHistorique;
 import com.example.collabasket.utils.ProduitGroupesDiffCallback;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -45,7 +46,6 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         this.produits = nouveauxProduits;
         diffResult.dispatchUpdatesTo(this);
     }
-
 
     @NonNull
     @Override
@@ -80,22 +80,31 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
                     .document(produitAvecId.id)
                     .update("coche", isChecked)
                     .addOnFailureListener(e -> Toast.makeText(holder.itemView.getContext(), "Erreur de mise à jour", Toast.LENGTH_SHORT).show());
+
+            if (isChecked) {
+                ajouterDansHistoriqueEtSupprimer(produit, produitAvecId.id, holder);
+            }
         });
 
         holder.btnSupprimer.setOnClickListener(v -> {
-            firestore.collection("groups")
-                    .document(groupId)
-                    .collection("produits")
-                    .document(produitAvecId.id)
-                    .delete()
-                    .addOnSuccessListener(aVoid -> {
-                        produits.remove(position);
-                        notifyItemRemoved(position);
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(holder.itemView.getContext(), "Erreur lors de la suppression", Toast.LENGTH_SHORT).show();
-                    });
+            ajouterDansHistoriqueEtSupprimer(produit, produitAvecId.id, holder);
         });
+    }
+
+    private void ajouterDansHistoriqueEtSupprimer(ProduitGroupes produit, String docId, ProduitViewHolder holder) {
+        ProduitGroupesHistorique historique = new ProduitGroupesHistorique(produit);
+        firestore.collection("groups")
+                .document(groupId)
+                .collection("historique")
+                .add(historique)
+                .addOnSuccessListener(histoRef -> {
+                    firestore.collection("groups")
+                            .document(groupId)
+                            .collection("produits")
+                            .document(docId)
+                            .delete()
+                            .addOnFailureListener(e -> Toast.makeText(holder.itemView.getContext(), "Erreur lors de la suppression", Toast.LENGTH_SHORT).show());
+                });
     }
 
     @Override
