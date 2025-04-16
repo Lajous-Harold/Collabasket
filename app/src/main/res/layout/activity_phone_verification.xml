@@ -1,65 +1,95 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
-Classe associée : PhoneRegistrationActivity
-Utilité : Étape 1 de l’inscription : saisie du numéro de téléphone de l’utilisateur.
+Classe associée : PhoneVerificationActivity
+Utilité : Vérification du code SMS envoyé après saisie du numéro de téléphone.
 -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="24dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="24dp">
 
-    <!-- CCP -->
-    <com.hbb20.CountryCodePicker
-        android:id="@+id/ccp_phone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:ccp_defaultNameCode="FR"
-        app:ccp_showFullName="true"
-        app:ccp_showFlag="true"
-        android:layout_marginBottom="8dp" />
-
-    <!-- Numéro -->
-    <EditText
-        android:id="@+id/edit_phone"
-        android:hint="Numéro (ex : 0612345678)"
-        android:inputType="phone"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/btn_send_code"
-        android:text="Envoyer le code"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp" />
+        <!-- Bandeau retour + titre -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp">
 
-    <!-- Code reçu -->
-    <EditText
-        android:id="@+id/edit_code"
-        android:hint="Code de vérification"
-        android:inputType="number"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp" />
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_arrow_back"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Retour" />
 
-    <Button
-        android:id="@+id/btn_verify_code"
-        android:text="Vérifier et se connecter"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Connexion par téléphone"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:paddingEnd="32dp" />
+        </LinearLayout>
 
-    <!-- Retour vers login -->
-    <ImageButton
-        android:id="@+id/btn_retour"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:background="@null"
-        android:src="@drawable/ic_arrow_back"
-        android:contentDescription="Retour" />
-</LinearLayout>
+        <com.hbb20.CountryCodePicker
+            android:id="@+id/ccp_phone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:ccp_defaultNameCode="FR"
+            app:ccp_showFullName="true"
+            app:ccp_showFlag="true" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Numéro de téléphone">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:textColor="@android:color/black" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btn_send_code"
+            android:text="Envoyer le code"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout_code"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Code de vérification">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edit_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btn_verify_code"
+            android:text="Vérifier et continuer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>

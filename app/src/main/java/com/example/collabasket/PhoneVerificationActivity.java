@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.*;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.FirebaseException;
@@ -45,6 +46,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
 
         // 🔹 Envoi du code
         btnSendCode.setOnClickListener(v -> {
+            editPhone.setError(null); // Nettoyage
             String rawPhone = editPhone.getText().toString().replaceFirst("^0+", "").trim();
             if (TextUtils.isEmpty(rawPhone) || rawPhone.length() < 6) {
                 editPhone.setError("Numéro invalide");
@@ -65,6 +67,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
 
         // 🔹 Vérification du code reçu
         btnVerifyCode.setOnClickListener(v -> {
+            editCode.setError(null); // Nettoyage
             String code = editCode.getText().toString().trim();
             if (TextUtils.isEmpty(code)) {
                 editCode.setError("Code requis");
@@ -74,9 +77,10 @@ public class PhoneVerificationActivity extends AppCompatActivity {
             signInWithPhoneAuthCredential(credential);
         });
 
-        ImageButton btnRetour = findViewById(R.id.btn_retour);
+        ImageButton btnRetour = findViewById(R.id.btn_back);
         btnRetour.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
     }
+
 
     // 🔸 Callback Firebase
     private final PhoneAuthProvider.OnVerificationStateChangedCallbacks callbacks =
@@ -97,9 +101,20 @@ public class PhoneVerificationActivity extends AppCompatActivity {
                                        @NonNull PhoneAuthProvider.ForceResendingToken token) {
                     PhoneVerificationActivity.this.verificationId = verificationId;
                     Toast.makeText(PhoneVerificationActivity.this, "Code envoyé", Toast.LENGTH_SHORT).show();
+
+                    // ✅ Afficher champ de code et bouton
                     editCode.setVisibility(View.VISIBLE);
                     btnVerifyCode.setVisibility(View.VISIBLE);
+
+                    // ✅ Désactiver le champ de téléphone
+                    editPhone.setEnabled(false);
+                    editPhone.setTextColor(ContextCompat.getColor(PhoneVerificationActivity.this, android.R.color.darker_gray));
+                    ccp.setCcpClickable(false);
+
+                    // ✅ Bloquer les envois multiples
+                    btnSendCode.setEnabled(false);
                 }
+
             };
 
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {

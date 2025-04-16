@@ -10,6 +10,32 @@ Utilité : Vérification du code SMS envoyé après saisie du numéro de télép
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Retour" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Vérification téléphone"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:paddingEnd="32dp" />
+    </LinearLayout>
+
     <com.hbb20.CountryCodePicker
         android:id="@+id/ccp_phone"
         android:layout_width="wrap_content"
@@ -18,12 +44,20 @@ Utilité : Vérification du code SMS envoyé après saisie du numéro de télép
         app:ccp_showFullName="true"
         app:ccp_showFlag="true" />
 
-    <EditText
-        android:id="@+id/edit_phone"
-        android:hint="Numéro de téléphone"
-        android:inputType="phone"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/input_layout_phone"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:hint="Numéro de téléphone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:textColor="@android:color/black" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/btn_send_code"
@@ -45,11 +79,4 @@ Utilité : Vérification du code SMS envoyé après saisie du numéro de télép
         android:text="Vérifier et continuer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/btn_back"
-        android:text="← Retour"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp" />
 </LinearLayout>

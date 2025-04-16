@@ -9,6 +9,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.*;
@@ -20,10 +21,12 @@ import java.util.concurrent.TimeUnit;
 public class PhoneRegistrationActivity extends AppCompatActivity {
 
     private EditText editPhone, editCode;
-    private Button btnSendCode, btnVerifyCode, btnBack;
+    private Button btnSendCode, btnVerifyCode;
+    private ImageButton btnBack;
     private CountryCodePicker ccp;
     private FirebaseAuth mAuth;
     private String verificationId;
+    private String verifiedPhone; // Pour conserver le numéro complet
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +54,15 @@ public class PhoneRegistrationActivity extends AppCompatActivity {
                 return;
             }
 
-            String phone = ccp.getSelectedCountryCodeWithPlus() + rawPhone;
+            verifiedPhone = ccp.getSelectedCountryCodeWithPlus() + rawPhone;
+
+            // Désactiver la modification du champ
+            editPhone.setEnabled(false);
+            editPhone.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+            ccp.setCcpClickable(false);
 
             PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth)
-                    .setPhoneNumber(phone)
+                    .setPhoneNumber(verifiedPhone)
                     .setTimeout(60L, TimeUnit.SECONDS)
                     .setActivity(this)
                     .setCallbacks(callbacks)
@@ -72,7 +80,9 @@ public class PhoneRegistrationActivity extends AppCompatActivity {
             PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
             mAuth.signInWithCredential(credential)
                     .addOnSuccessListener(result -> {
-                        startActivity(new Intent(this, CompleteRegistrationActivity.class));
+                        Intent intent = new Intent(this, CompleteRegistrationActivity.class);
+                        intent.putExtra("verifiedPhone", verifiedPhone); // ➕ passage du téléphone
+                        startActivity(intent);
                         finish();
                     })
                     .addOnFailureListener(e -> {
@@ -112,7 +122,9 @@ public class PhoneRegistrationActivity extends AppCompatActivity {
     private void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
         mAuth.signInWithCredential(credential)
                 .addOnSuccessListener(result -> {
-                    startActivity(new Intent(this, CompleteRegistrationActivity.class));
+                    Intent intent = new Intent(this, CompleteRegistrationActivity.class);
+                    intent.putExtra("verifiedPhone", verifiedPhone); // ➕ passage du téléphone
+                    startActivity(intent);
                     finish();
                 });
     }
