@@ -289,6 +289,15 @@ public class ListeGroupesFragment extends Fragment {
     private void envoyerInvitationParSms(Contact contact) {
         String phone = contact.getPhone();
 
+        // 🔐 Vérifie la permission d'envoi de SMS
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            contactEnCoursPourSms = contact;
+            smsPermissionLauncher.launch(Manifest.permission.SEND_SMS);
+            return;
+        }
+
+        // 🔗 Crée le lien d'invitation raccourci via Firebase Dynamic Links
         FirebaseDynamicLinks.getInstance()
                 .createDynamicLink()
                 .setLink(Uri.parse("https://collabasket.page.link/invite?groupId=" + groupId))
@@ -296,7 +305,8 @@ public class ListeGroupesFragment extends Fragment {
                 .setAndroidParameters(new DynamicLink.AndroidParameters.Builder().build())
                 .buildShortDynamicLink()
                 .addOnSuccessListener(shortLink -> {
-                    String message = "Salut ! Rejoins notre groupe de courses " + groupName + " sur Collabasket. Voici le lien : " + shortLink.getShortLink();
+                    String message = "Salut ! Rejoins notre groupe de courses " + groupName +
+                            " sur Collabasket. Voici le lien : " + shortLink.getShortLink();
 
                     try {
                         SmsManager smsManager = SmsManager.getDefault();
@@ -312,7 +322,6 @@ public class ListeGroupesFragment extends Fragment {
                     Toast.makeText(getContext(), "Échec de la génération du lien", Toast.LENGTH_SHORT).show();
                 });
     }
-
     private void loadProduitsForGroup() {
         firestore.collection("groups")
                 .document(groupId)
