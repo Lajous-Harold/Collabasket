@@ -71,7 +71,6 @@
 
         <!-- Autres activités -->
         <activity android:name=".LoginActivity" />
-        <activity android:name=".RegisterActivity" />
         <activity android:name=".PhoneVerificationActivity" />
         <activity android:name=".PhoneRegistrationActivity" />
         <activity android:name=".CompleteRegistrationActivity" />

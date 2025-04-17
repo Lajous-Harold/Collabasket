@@ -135,7 +135,7 @@ public class PhoneVerificationActivity extends AppCompatActivity {
                                         // ❌ Pas de compte associé
                                         Toast.makeText(this, "Aucun compte lié à ce numéro. Veuillez créer un compte.", Toast.LENGTH_LONG).show();
                                         FirebaseAuth.getInstance().signOut();
-                                        startActivity(new Intent(this, RegisterActivity.class));
+                                        startActivity(new Intent(this, CompleteRegistrationActivity.class));
                                         finish();
                                     }
                                 });
