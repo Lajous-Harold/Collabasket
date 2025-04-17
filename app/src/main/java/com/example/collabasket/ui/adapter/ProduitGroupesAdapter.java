@@ -1,12 +1,10 @@
 package com.example.collabasket.ui.adapter;
 
+import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -50,8 +48,7 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
     @NonNull
     @Override
     public ProduitViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_produit_groupes, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_produit_groupes, parent, false);
         return new ProduitViewHolder(view);
     }
 
@@ -60,50 +57,60 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         ProduitAvecId produitAvecId = produits.get(position);
         ProduitGroupes produit = produitAvecId.produit;
 
-        holder.nomProduit.setText(produit.getNom());
-        holder.detailsProduit.setText(produit.getQuantite() + " " + produit.getUnite() + " • " + produit.getCategorie());
+        // Affichage du nom + quantité + catégorie
+        String quantite = (produit.getQuantite() % 1 == 0)
+                ? String.valueOf((int) produit.getQuantite())
+                : String.valueOf(produit.getQuantite());
+
+        holder.nomProduit.setText(quantite + " " + produit.getUnite() + " de " + produit.getNom());
+        holder.detailsProduit.setText(produit.getCategorie());
         holder.ajoutePar.setText("Ajouté par : " + produit.getAjoutePar());
 
         holder.checkbox.setOnCheckedChangeListener(null);
         holder.checkbox.setChecked(produit.isCoche());
-        holder.nomProduit.setPaintFlags(produit.isCoche() ?
-                holder.nomProduit.getPaintFlags() | 16 :
-                holder.nomProduit.getPaintFlags() & ~16);
-        holder.btnSupprimer.setVisibility(produit.isCoche() ? View.VISIBLE : View.GONE);
+
+        if (produit.isCoche()) {
+            holder.nomProduit.setPaintFlags(holder.nomProduit.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.btnAchete.setVisibility(View.VISIBLE);
+        } else {
+            holder.nomProduit.setPaintFlags(holder.nomProduit.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+            holder.btnAchete.setVisibility(View.GONE);
+        }
 
         holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             produit.setCoche(isChecked);
             notifyItemChanged(position);
+
             firestore.collection("groups")
                     .document(groupId)
                     .collection("produits")
                     .document(produitAvecId.id)
-                    .update("coche", isChecked)
-                    .addOnFailureListener(e -> Toast.makeText(holder.itemView.getContext(), "Erreur de mise à jour", Toast.LENGTH_SHORT).show());
+                    .update("coche", isChecked);
+        });
 
-            if (isChecked) {
-                ajouterDansHistoriqueEtSupprimer(produit, produitAvecId.id, holder);
-            }
+        holder.btnAchete.setOnClickListener(v -> {
+            ajouterDansHistoriqueEtSupprimer(produitAvecId.id, produit, holder);
         });
 
         holder.btnSupprimer.setOnClickListener(v -> {
-            ajouterDansHistoriqueEtSupprimer(produit, produitAvecId.id, holder);
+            ajouterDansHistoriqueEtSupprimer(produitAvecId.id, produit, holder);
         });
     }
 
-    private void ajouterDansHistoriqueEtSupprimer(ProduitGroupes produit, String docId, ProduitViewHolder holder) {
+    private void ajouterDansHistoriqueEtSupprimer(String docId, ProduitGroupes produit, ProduitViewHolder holder) {
         ProduitGroupesHistorique historique = new ProduitGroupesHistorique(produit);
+
         firestore.collection("groups")
                 .document(groupId)
                 .collection("historique")
                 .add(historique)
-                .addOnSuccessListener(histoRef -> {
+                .addOnSuccessListener(aVoid -> {
                     firestore.collection("groups")
                             .document(groupId)
                             .collection("produits")
                             .document(docId)
                             .delete()
-                            .addOnFailureListener(e -> Toast.makeText(holder.itemView.getContext(), "Erreur lors de la suppression", Toast.LENGTH_SHORT).show());
+                            .addOnSuccessListener(v -> Toast.makeText(holder.itemView.getContext(), "Produit archivé", Toast.LENGTH_SHORT).show());
                 });
     }
 
@@ -117,6 +124,7 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         TextView nomProduit, detailsProduit, ajoutePar;
         CheckBox checkbox;
         ImageButton btnSupprimer;
+        Button btnAchete;
 
         public ProduitViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -125,6 +133,7 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
             ajoutePar = itemView.findViewById(R.id.text_ajoute_par);
             checkbox = itemView.findViewById(R.id.checkbox_produit);
             btnSupprimer = itemView.findViewById(R.id.btn_supprimer);
+            btnAchete = itemView.findViewById(R.id.btn_achete);
         }
     }
 }
