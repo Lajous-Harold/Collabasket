@@ -103,11 +103,24 @@ public class ListeGroupesFragment extends Fragment {
         titre.setText(groupName);
 
         firestore = FirebaseFirestore.getInstance();
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         recyclerView = rootView.findViewById(R.id.recycler_produits);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        produitAdapter = new ProduitGroupesAdapter(groupId);
-        recyclerView.setAdapter(produitAdapter);
+
+        FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    String role = doc.getString("members." + currentUserId + ".role");
+                    if (role == null) role = "Membre";
+
+                    produitAdapter = new ProduitGroupesAdapter(groupId, role);
+                    recyclerView.setAdapter(produitAdapter);
+
+                    chargerProduitsEnTempsReel(); // relance l'écoute dynamique
+                });
 
         chargerProduitsEnTempsReel();
 

@@ -40,9 +40,11 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
     private List<ProduitAvecId> produits = new ArrayList<>();
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
     private final String groupId;
+    private final String currentUserRole;
 
-    public ProduitGroupesAdapter(String groupId) {
+    public ProduitGroupesAdapter(String groupId, String currentUserRole) {
         this.groupId = groupId;
+        this.currentUserRole = currentUserRole;
     }
 
     public void setProduits(List<ProduitAvecId> nouveauxProduits) {
@@ -90,15 +92,21 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
             holder.btnAchete.setVisibility(View.GONE);
         }
 
-        holder.btnSupprimer.setOnClickListener(v -> {
-            Context context = holder.itemView.getContext();
-            new AlertDialog.Builder(context)
-                    .setTitle("Confirmation")
-                    .setMessage("Supprimer ce produit ?")
-                    .setPositiveButton("Oui", (dialog, which) -> verifierEtSupprimer(holder.getAdapterPosition()))
-                    .setNegativeButton("Annuler", null)
-                    .show();
-        });
+        if ("Membre".equals(currentUserRole)) {
+            holder.btnSupprimer.setVisibility(View.GONE);
+        } else {
+            holder.btnSupprimer.setVisibility(View.VISIBLE);
+            holder.btnSupprimer.setOnClickListener(v -> {
+                Context context = holder.itemView.getContext();
+                new AlertDialog.Builder(context)
+                        .setTitle("Confirmation")
+                        .setMessage("Supprimer ce produit ?")
+                        .setPositiveButton("Oui", (dialog, which) -> verifierEtSupprimer(holder.getAdapterPosition()))
+                        .setNegativeButton("Annuler", null)
+                        .show();
+            });
+        }
+
 
         holder.btnAchete.setOnClickListener(v -> {
             Context context = holder.itemView.getContext();
