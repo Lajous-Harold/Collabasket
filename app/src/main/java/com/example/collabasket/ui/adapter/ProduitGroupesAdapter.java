@@ -41,10 +41,12 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
     private final FirebaseFirestore firestore = FirebaseFirestore.getInstance();
     private final String groupId;
     private final String currentUserRole;
+    private final Context context;
 
-    public ProduitGroupesAdapter(String groupId, String currentUserRole) {
+    public ProduitGroupesAdapter(String groupId, String currentUserRole, Context context) {
         this.groupId = groupId;
         this.currentUserRole = currentUserRole;
+        this.context = context;
     }
 
     public void setProduits(List<ProduitAvecId> nouveauxProduits) {
@@ -128,7 +130,7 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
                 if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
                     supprimer(position);
                 } else {
-                    Toast.makeText(null, "Permission refusée", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Permission refusée", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -142,7 +144,7 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
                 if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
                     marquerAchete(position);
                 } else {
-                    Toast.makeText(null, "Permission refusée", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Permission refusée", Toast.LENGTH_SHORT).show();
                 }
             }
         });

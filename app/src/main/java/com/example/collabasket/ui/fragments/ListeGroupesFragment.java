@@ -63,18 +63,31 @@ public class ListeGroupesFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_liste_groupes, container, false);
 
         ImageButton btnRetour = rootView.findViewById(R.id.btn_retour_groupes);
-        btnRetour.setOnClickListener(v -> {
-            requireActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new GroupesFragment())
-                    .commit();
-        });
+        btnRetour.setOnClickListener(v -> revenirAGroupes());
 
         if (getArguments() != null) {
-            groupId = getArguments() != null && getArguments().containsKey("groupId") ? getArguments().getString("groupId") : "";
-            groupName = getArguments() != null && getArguments().containsKey("groupName") ? getArguments().getString("groupName") : "";
+            groupId = getArguments().getString("groupId", "");
+            groupName = getArguments().getString("groupName", "");
         }
 
+        setupPermissions();
+        setupToolbar(rootView);
+        setupRecyclerView(rootView);
+        setupFloatingActionButton(rootView);
+
+        recupererRoleEtInitialiserInterface(rootView);
+
+        return rootView;
+    }
+
+    private void revenirAGroupes() {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, new GroupesFragment())
+                .commit();
+    }
+
+    private void setupPermissions() {
         contactsPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
@@ -96,41 +109,52 @@ public class ListeGroupesFragment extends Fragment {
                     }
                 }
         );
+    }
 
-
+    private void setupToolbar(View rootView) {
         TextView titre = rootView.findViewById(R.id.text_group_title);
         textEmptyList = rootView.findViewById(R.id.text_empty_list);
         titre.setText(groupName);
+    }
 
+    private void setupRecyclerView(View rootView) {
         firestore = FirebaseFirestore.getInstance();
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
         recyclerView = rootView.findViewById(R.id.recycler_produits);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
 
-        FirebaseFirestore.getInstance()
-                .collection("groups")
+    private void setupFloatingActionButton(View rootView) {
+        FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
+        fab.setOnClickListener(v -> showAddProduitDialog());
+    }
+
+    private void recupererRoleEtInitialiserInterface(View rootView) {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        firestore.collection("groups")
                 .document(groupId)
                 .get()
                 .addOnSuccessListener(doc -> {
                     String role = doc.getString("members." + currentUserId + ".role");
                     if (role == null) role = "Membre";
 
-                    produitAdapter = new ProduitGroupesAdapter(groupId, role);
+                    produitAdapter = new ProduitGroupesAdapter(groupId, role, requireContext());
                     recyclerView.setAdapter(produitAdapter);
 
-                    chargerProduitsEnTempsReel(); // relance l'écoute dynamique
+                    chargerProduitsEnTempsReel();
+                    setupMenuOptions(rootView, role);
                 });
+    }
 
-        chargerProduitsEnTempsReel();
-
-        FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
-        fab.setOnClickListener(v -> showAddProduitDialog());
-
+    private void setupMenuOptions(View rootView, String role) {
         ImageButton menuButton = rootView.findViewById(R.id.button_menu_options);
         menuButton.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(requireContext(), v);
             popup.getMenuInflater().inflate(R.menu.menu_groupe, popup.getMenu());
+
+            if ("Membre".equals(role)) {
+                popup.getMenu().findItem(R.id.menu_ajouter_membre).setVisible(false);
+            }
 
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
@@ -172,10 +196,7 @@ public class ListeGroupesFragment extends Fragment {
 
             popup.show();
         });
-
-        return rootView;
     }
-
     private void checkContactsPermissionEtCharger() {
         if (ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.READ_CONTACTS)
                 == PackageManager.PERMISSION_GRANTED) {
