@@ -27,12 +27,20 @@ public class HistoriqueGroupeFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProduitGroupesHistoriqueAdapter adapter;
     private FirebaseFirestore firestore;
+    private String groupId;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_historique_groupe, container, false);
+
+        groupId = getArguments() != null ? getArguments().getString("groupId") : null;
+        if (groupId == null || groupId.isEmpty()) {
+            Toast.makeText(getContext(), "Erreur : ID du groupe manquant", Toast.LENGTH_LONG).show();
+            requireActivity().onBackPressed();
+            return view;
+        }
 
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
@@ -41,19 +49,18 @@ public class HistoriqueGroupeFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recycler_historique_groupe);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
         adapter = new ProduitGroupesHistoriqueAdapter(new ArrayList<>());
+        adapter.setGroupId(groupId); // ✅ important pour éviter NullPointerException
         recyclerView.setAdapter(adapter);
 
         firestore = FirebaseFirestore.getInstance();
-
         chargerHistoriqueGroupe();
 
         return view;
     }
 
     private void chargerHistoriqueGroupe() {
-        String groupId = getArguments() != null ? getArguments().getString("groupId") : "";
-
         firestore.collection("groups")
                 .document(groupId)
                 .collection("historique")

@@ -39,7 +39,7 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_produit_historique, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_produit_historique_groupe, parent, false);
         return new ViewHolder(view);
     }
 
@@ -56,6 +56,11 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
         holder.ajoutePar.setText("Ajouté par : " + produit.ajoutePar);
 
         holder.btnAjouter.setOnClickListener(v -> {
+            if (groupId == null || groupId.isEmpty()) {
+                Toast.makeText(holder.itemView.getContext(), "Erreur : ID du groupe manquant", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
             FirebaseFirestore.getInstance().collection("users")
@@ -85,7 +90,7 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
 
     @Override
     public int getItemCount() {
-        return produits.size();
+        return produits != null ? produits.size() : 0;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
