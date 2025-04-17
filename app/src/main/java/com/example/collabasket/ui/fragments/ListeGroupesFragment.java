@@ -101,7 +101,7 @@ public class ListeGroupesFragment extends Fragment {
         produitAdapter = new ProduitGroupesAdapter(groupId);
         recyclerView.setAdapter(produitAdapter);
 
-        loadProduitsForGroup();
+        chargerProduitsEnTempsReel();
 
         FloatingActionButton fab = rootView.findViewById(R.id.fab_ajouter_groupe);
         fab.setOnClickListener(v -> showAddProduitDialog());
@@ -322,33 +322,6 @@ public class ListeGroupesFragment extends Fragment {
                     Toast.makeText(getContext(), "Échec de la génération du lien", Toast.LENGTH_SHORT).show();
                 });
     }
-    private void loadProduitsForGroup() {
-        firestore.collection("groups")
-                .document(groupId)
-                .collection("produits")
-                .get()
-                .addOnSuccessListener(snapshot -> {
-                    List<ProduitGroupesAdapter.ProduitAvecId> produits = new ArrayList<>();
-                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        ProduitGroupes produit = doc.toObject(ProduitGroupes.class);
-                        produits.add(new ProduitGroupesAdapter.ProduitAvecId(doc.getId(), produit));
-                    }
-
-                    produitAdapter.setProduits(produits);
-
-                    // ✅ Gérer l'affichage du message si la liste est vide
-                    if (produits.isEmpty()) {
-                        textEmptyList.setVisibility(View.VISIBLE);
-                    } else {
-                        textEmptyList.setVisibility(View.GONE);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Erreur lors du chargement des produits", Toast.LENGTH_SHORT).show();
-                    Log.e("ListeGroupesFragment", "Erreur Firestore : ", e);
-                });
-    }
-
     private void quitterGroupe() {
         FirebaseFirestore.getInstance()
                 .collection("groups")
@@ -455,8 +428,7 @@ public class ListeGroupesFragment extends Fragment {
                                     firestore.collection("groups")
                                             .document(groupId)
                                             .collection("produits")
-                                            .add(produit)
-                                            .addOnSuccessListener(ref -> loadProduitsForGroup());
+                                            .add(produit);
                                 });
                     } else {
                         Toast.makeText(getContext(), "Le nom du produit est requis", Toast.LENGTH_SHORT).show();
@@ -465,4 +437,25 @@ public class ListeGroupesFragment extends Fragment {
                 .setNegativeButton("Annuler", null)
                 .show();
     }
+    private void chargerProduitsEnTempsReel() {
+        firestore.collection("groups")
+                .document(groupId)
+                .collection("produits")
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) {
+                        Toast.makeText(getContext(), "Erreur de synchronisation", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    List<ProduitGroupesAdapter.ProduitAvecId> produits = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        ProduitGroupes produit = doc.toObject(ProduitGroupes.class);
+                        produits.add(new ProduitGroupesAdapter.ProduitAvecId(doc.getId(), produit));
+                    }
+
+                    produitAdapter.setProduits(produits);
+                    textEmptyList.setVisibility(produits.isEmpty() ? View.VISIBLE : View.GONE);
+                });
+    }
+
 }

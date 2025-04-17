@@ -49,6 +49,8 @@ public class HistoriquePersoFragment extends Fragment {
 
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
+        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override

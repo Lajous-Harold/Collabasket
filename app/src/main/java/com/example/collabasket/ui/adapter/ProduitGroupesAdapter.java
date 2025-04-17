@@ -73,6 +73,14 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
 
         holder.checkbox_produit.setOnCheckedChangeListener(null);
         holder.checkbox_produit.setChecked(produit.isCoche());
+        holder.checkbox_produit.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            firestore.collection("groups")
+                    .document(groupId)
+                    .collection("produits")
+                    .document(produitAvecId.id)
+                    .update("coche", isChecked)
+                    .addOnSuccessListener(unused -> notifyItemChanged(holder.getAdapterPosition()));
+        });
 
         if (produit.isCoche()) {
             holder.nomProduit.setPaintFlags(holder.nomProduit.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);

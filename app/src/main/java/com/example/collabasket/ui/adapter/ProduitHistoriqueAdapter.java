@@ -65,7 +65,10 @@ public class ProduitHistoriqueAdapter extends RecyclerView.Adapter<ProduitHistor
                                     .collection("users")
                                     .document(uid)
                                     .collection("produits")
-                                    .add(produit);
+                                    .add(produit)
+                                    .addOnSuccessListener(docRef -> {
+                                        Toast.makeText(holder.itemView.getContext(), "Produit réajouté à la liste", Toast.LENGTH_SHORT).show();
+                                    });
                         } else {
                             Toast.makeText(holder.itemView.getContext(), "Déjà dans votre liste", Toast.LENGTH_SHORT).show();
                         }

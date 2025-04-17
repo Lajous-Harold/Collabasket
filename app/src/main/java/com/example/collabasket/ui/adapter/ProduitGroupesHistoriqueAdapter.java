@@ -93,7 +93,10 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
                                                 .collection("groups")
                                                 .document(groupId)
                                                 .collection("produits")
-                                                .add(nouveauProduit);
+                                                .add(nouveauProduit)
+                                                .addOnSuccessListener(docRef -> {
+                                                    Toast.makeText(holder.itemView.getContext(), "Produit réajouté à la liste", Toast.LENGTH_SHORT).show();
+                                                });
                                     } else {
                                         Toast.makeText(holder.itemView.getContext(), "Ce produit existe déjà dans la liste", Toast.LENGTH_SHORT).show();
                                     }
@@ -115,7 +118,7 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
             super(itemView);
             nom = itemView.findViewById(R.id.nom_historique);
             categorie = itemView.findViewById(R.id.categorie_historique);
-            ajoutePar = itemView.findViewById(R.id.text_ajoute_par);
+            ajoutePar = itemView.findViewById(R.id.ajoute_par_historique);
             btnAjouter = itemView.findViewById(R.id.btn_ajouter_depuis_historique);
         }
     }
