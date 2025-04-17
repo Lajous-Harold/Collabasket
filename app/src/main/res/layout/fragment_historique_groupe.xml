@@ -55,4 +55,8 @@
         android:textColor="@android:color/white"
         android:layout_margin="8dp" />
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="80dp" />
+
 </LinearLayout>

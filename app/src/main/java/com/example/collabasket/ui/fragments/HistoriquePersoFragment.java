@@ -60,7 +60,7 @@ public class HistoriquePersoFragment extends Fragment {
 
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.action_vider_historique) {
+                if (item.getItemId() == R.id.btn_vider_historique) {
                     new AlertDialog.Builder(requireContext())
                             .setTitle("Confirmation")
                             .setMessage("Voulez-vous vraiment supprimer tout l'historique ?")

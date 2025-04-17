@@ -8,6 +8,7 @@ import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -18,6 +19,7 @@ import com.example.collabasket.R;
 import com.example.collabasket.model.ProduitGroupesHistorique;
 import com.example.collabasket.ui.adapter.ProduitGroupesHistoriqueAdapter;
 import com.example.collabasket.utils.HistoriqueLoader;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -97,7 +99,27 @@ public class HistoriqueGroupeFragment extends Fragment {
             @Override public void onNothingSelected(AdapterView<?> parent) { }
         });
 
-        view.findViewById(R.id.btn_vider_historique).setOnClickListener(v -> viderHistorique());
+        view.findViewById(R.id.btn_vider_historique).setOnClickListener(v -> {
+            String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            FirebaseFirestore.getInstance()
+                    .collection("groups")
+                    .document(groupId)
+                    .get()
+                    .addOnSuccessListener(snapshot -> {
+                        String role = snapshot.getString("members." + currentUid + ".role");
+                        if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Confirmation")
+                                    .setMessage("Voulez-vous vraiment vider tout l’historique du groupe ?")
+                                    .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
+                                    .setNegativeButton("Annuler", null)
+                                    .show();
+                        } else {
+                            Toast.makeText(getContext(), "Permission refusée", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
 
         charger.run();
         return view;
