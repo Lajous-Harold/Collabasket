@@ -16,7 +16,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.DocumentReference;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InfoGroupeFragment extends Fragment {
@@ -105,15 +107,12 @@ public class InfoGroupeFragment extends Fragment {
                         });
                     }
 
-                    // Afficher le bouton de gestion des permissions uniquement pour Propriétaire et Admin
-                    if ("Propriétaire".equals(currentUserRole) || "Administrateur".equals(currentUserRole)) {
+                    // Afficher le bouton de gestion des permissions uniquement pour Propriétaire
+                    if ("Propriétaire".equals(currentUserRole)) {
                         btnGestionPermissions.setVisibility(View.VISIBLE);
-                        btnGestionPermissions.setOnClickListener(v -> ouvrirPopupGestionPermissions(membres));
-                    } else {
-                        btnGestionPermissions.setVisibility(View.GONE);
+                        btnGestionPermissions.setOnClickListener(v -> ouvrirInterfaceGestionPermissions(membres));
                     }
 
-                    // Affichage dynamique des membres avec espacement
                     for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
                         String uid = entry.getKey();
                         Map<String, Object> infos = entry.getValue();
@@ -121,71 +120,121 @@ public class InfoGroupeFragment extends Fragment {
                         String phone = (String) infos.get("numero");
                         String role = (String) infos.get("role");
 
+                        LinearLayout ligne = new LinearLayout(getContext());
+                        ligne.setOrientation(LinearLayout.HORIZONTAL);
+                        ligne.setPadding(0, 8, 0, 8);
+                        ligne.setLayoutParams(new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT
+                        ));
+
                         TextView tv = new TextView(getContext());
                         tv.setText(username + " (" + phone + ") - " + role);
-                        tv.setPadding(0, 8, 0, 8); // Espacement vertical
-                        listeMembres.addView(tv);
+                        tv.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+                        ligne.addView(tv);
+
+                        // Ajout du bouton uniquement si currentUser est Admin ET que le membre est un Membre
+                        if ("Administrateur".equals(currentUserRole) && "Membre".equals(role)) {
+                            Button btnPromouvoir = new Button(getContext());
+                            btnPromouvoir.setText("Promouvoir");
+                            btnPromouvoir.setTextSize(12);
+                            btnPromouvoir.setOnClickListener(v -> promouvoirEnAdmin(uid));
+                            ligne.addView(btnPromouvoir);
+                        }
+
+                        listeMembres.addView(ligne);
                     }
+
                 });
     }
-    private void ouvrirPopupGestionPermissions(Map<String, Map<String, Object>> membres) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Gérer les permissions");
+    private void promouvoirEnAdmin(String uid) {
+        DocumentReference groupRef = FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId);
 
+        groupRef.get().addOnSuccessListener(snapshot -> {
+            if (!snapshot.exists()) return;
+
+            Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
+            if (membres == null || !membres.containsKey(uid)) return;
+
+            membres.get(uid).put("role", "Administrateur");
+
+            groupRef.update("members", membres)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Membre promu avec succès", Toast.LENGTH_SHORT).show();
+                        chargerInfosGroupe(); // Refresh visuel
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la promotion", Toast.LENGTH_SHORT).show());
+        });
+    }
+    private void ouvrirInterfaceGestionPermissions(Map<String, Map<String, Object>> membres) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Modifier les rôles");
+
+        ScrollView scroll = new ScrollView(requireContext());
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(16, 16, 16, 16);
+        scroll.addView(layout);
 
-        Map<String, String> changements = new HashMap<>();
+        Map<String, String> modifications = new HashMap<>();
+        final String[] nouveauProprietaire = {null};
 
         for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
             String uid = entry.getKey();
             Map<String, Object> infos = entry.getValue();
-            String role = (String) infos.get("role");
             String username = (String) infos.get("userName");
+            String roleActuel = (String) infos.get("role");
 
-            if (uid.equals(currentUserId) || "Propriétaire".equals(role)) continue;
+            if (uid.equals(currentUserId)) continue; // Ne pas gérer son propre rôle
 
             TextView label = new TextView(requireContext());
-            label.setText(username);
+            label.setText(username + " - Actuel : " + roleActuel);
             layout.addView(label);
 
+            List<String> choix = new ArrayList<>();
+            if (!"Membre".equals(roleActuel)) choix.add("Membre");
+            if (!"Administrateur".equals(roleActuel)) choix.add("Administrateur");
+            if (!"Propriétaire".equals(roleActuel)) choix.add("Propriétaire");
+
             Spinner spinner = new Spinner(requireContext());
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    requireContext(),
-                    android.R.layout.simple_spinner_item,
-                    new String[]{"Membre", "Administrateur"}
-            );
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, choix);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
-            spinner.setSelection("Administrateur".equals(role) ? 1 : 0);
-
-            spinner.setTag(uid);
+            spinner.setTag(uid + "|" + roleActuel);
             layout.addView(spinner);
         }
 
-        builder.setView(layout);
+        builder.setView(scroll);
 
         builder.setPositiveButton("Valider", (dialog, which) -> {
             for (int i = 0; i < layout.getChildCount(); i++) {
-                View view = layout.getChildAt(i);
-                if (view instanceof Spinner) {
-                    Spinner sp = (Spinner) view;
-                    String uid = (String) sp.getTag();
-                    String selectedRole = (String) sp.getSelectedItem();
-                    changements.put(uid, selectedRole);
+                View v = layout.getChildAt(i);
+                if (v instanceof Spinner) {
+                    Spinner sp = (Spinner) v;
+                    String tag = (String) sp.getTag();
+                    String[] parts = tag.split("\\|");
+                    String uid = parts[0];
+                    String ancien = parts[1];
+
+                    String selection = (String) sp.getSelectedItem();
+                    if (!selection.equals(ancien)) {
+                        if ("Propriétaire".equals(selection)) {
+                            nouveauProprietaire[0] = uid;
+                        }
+                        modifications.put(uid, selection);
+                    }
                 }
             }
 
-            if (!changements.isEmpty()) {
-                appliquerChangementsDeRoles(changements);
-            }
+            appliquerChangementsDeRoles(modifications, nouveauProprietaire[0]);
         });
 
         builder.setNegativeButton("Annuler", null);
         builder.show();
     }
-    private void appliquerChangementsDeRoles(Map<String, String> changements) {
+    private void appliquerChangementsDeRoles(Map<String, String> changements, @Nullable String nouveauProprietaireId) {
         DocumentReference groupRef = FirebaseFirestore.getInstance()
                 .collection("groups")
                 .document(groupId);
@@ -196,17 +245,32 @@ public class InfoGroupeFragment extends Fragment {
             Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
             if (membres == null) return;
 
+            // Si un nouveau propriétaire est désigné, rétrograder l'ancien
+            if (nouveauProprietaireId != null) {
+                for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
+                    String uid = entry.getKey();
+                    String role = (String) entry.getValue().get("role");
+                    if ("Propriétaire".equals(role)) {
+                        membres.get(uid).put("role", "Administrateur");
+                    }
+                }
+                membres.get(nouveauProprietaireId).put("role", "Propriétaire");
+            }
+
+            // Appliquer les autres changements
             for (Map.Entry<String, String> entry : changements.entrySet()) {
                 String uid = entry.getKey();
                 String nouveauRole = entry.getValue();
-
-                if (membres.containsKey(uid)) {
+                if (!"Propriétaire".equals(nouveauRole)) {
                     membres.get(uid).put("role", nouveauRole);
                 }
             }
 
             groupRef.update("members", membres)
-                    .addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Permissions mises à jour", Toast.LENGTH_SHORT).show())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Permissions mises à jour", Toast.LENGTH_SHORT).show();
+                        chargerInfosGroupe(); // refresh affichage
+                    })
                     .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la mise à jour", Toast.LENGTH_SHORT).show());
         });
     }
