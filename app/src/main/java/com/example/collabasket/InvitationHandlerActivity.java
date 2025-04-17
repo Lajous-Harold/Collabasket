@@ -22,6 +22,7 @@ public class InvitationHandlerActivity extends AppCompatActivity {
     private String currentUid;
     private TextView textMessage;
     private Button btnJoin;
+    private Button btnRefuser
     private ProgressBar progressBar;
     private FirebaseFirestore db;
 
@@ -32,6 +33,7 @@ public class InvitationHandlerActivity extends AppCompatActivity {
 
         textMessage = findViewById(R.id.text_invite_message);
         btnJoin = findViewById(R.id.btn_join_group);
+        btnRefuser = findViewById(R.id.btn_refuser_invite);
         progressBar = findViewById(R.id.progress_bar);
         db = FirebaseFirestore.getInstance();
 
@@ -58,6 +60,7 @@ public class InvitationHandlerActivity extends AppCompatActivity {
                     if (!snapshot.exists()) {
                         textMessage.setText("Ce groupe n'existe pas.");
                         btnJoin.setVisibility(View.GONE);
+                        btnRefuser.setVisibility(View.GONE);
                         return;
                     }
 
@@ -70,16 +73,26 @@ public class InvitationHandlerActivity extends AppCompatActivity {
                         if (memberIds != null && memberIds.contains(currentUid)) {
                             textMessage.setText("Vous êtes déjà membre du groupe.");
                             btnJoin.setVisibility(View.GONE);
+                            btnRefuser.setVisibility(View.GONE);
                             return;
                         }
                     }
 
+                    // ✅ Affiche les deux boutons
                     btnJoin.setVisibility(View.VISIBLE);
+                    btnRefuser.setVisibility(View.VISIBLE);
+
                     btnJoin.setOnClickListener(v -> ajouterUtilisateurAuGroupe(snapshot));
+                    btnRefuser.setOnClickListener(v -> {
+                        Toast.makeText(this, "Invitation refusée", Toast.LENGTH_SHORT).show();
+                        finish();
+                    });
                 })
                 .addOnFailureListener(e -> {
                     progressBar.setVisibility(View.GONE);
                     textMessage.setText("Erreur lors de l'accès au groupe.");
+                    btnJoin.setVisibility(View.GONE);
+                    btnRefuser.setVisibility(View.GONE);
                     Log.e("INVITE", "Erreur : ", e);
                 });
     }
@@ -99,15 +112,18 @@ public class InvitationHandlerActivity extends AppCompatActivity {
                     nouveauMembre.put("numero", numero);
                     nouveauMembre.put("role", "Membre");
 
+                    // ✅ Nouvelle structure : Map<String, Object> pour les membres
                     @SuppressWarnings("unchecked")
-                    java.util.List<Map<String, Object>> members = (java.util.List<Map<String, Object>>) groupSnapshot.get("members");
-                    if (members == null) members = new java.util.ArrayList<>();
-                    members.add(nouveauMembre);
+                    Map<String, Object> members = (Map<String, Object>) groupSnapshot.get("members");
+                    if (members == null) members = new HashMap<>();
+                    members.put(currentUid, nouveauMembre);
 
                     @SuppressWarnings("unchecked")
                     java.util.List<String> memberIds = (java.util.List<String>) groupSnapshot.get("memberIds");
                     if (memberIds == null) memberIds = new java.util.ArrayList<>();
-                    memberIds.add(currentUid);
+                    if (!memberIds.contains(currentUid)) {
+                        memberIds.add(currentUid);
+                    }
 
                     db.collection("groups").document(groupId)
                             .update("members", members, "memberIds", memberIds)
