@@ -23,7 +23,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class HistoriqueGroupeFragment extends Fragment {
 
@@ -31,7 +30,7 @@ public class HistoriqueGroupeFragment extends Fragment {
     private ProduitGroupesHistoriqueAdapter adapter;
     private FirebaseFirestore firestore;
     private String groupId;
-
+    private String currentUserRole;
     private SearchView searchView;
     private Spinner spinnerTri;
     private Spinner spinnerCategorie;
@@ -56,6 +55,24 @@ public class HistoriqueGroupeFragment extends Fragment {
             requireActivity().onBackPressed();
             return view;
         }
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        Button btnVider = view.findViewById(R.id.btn_vider_historique);
+        btnVider.setVisibility(View.GONE); // masqué par défaut
+
+        FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    currentUserRole = doc.getString("members." + currentUid + ".role");
+                    if (currentUserRole == null) currentUserRole = "Membre";
+
+                    if ("Propriétaire".equals(currentUserRole) || "Administrateur".equals(currentUserRole)) {
+                        btnVider.setVisibility(View.VISIBLE);
+                    } else {
+                        btnVider.setVisibility(View.GONE);
+                    }
+                });
 
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
@@ -99,32 +116,23 @@ public class HistoriqueGroupeFragment extends Fragment {
             @Override public void onNothingSelected(AdapterView<?> parent) { }
         });
 
-        view.findViewById(R.id.btn_vider_historique).setOnClickListener(v -> {
-            String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            FirebaseFirestore.getInstance()
-                    .collection("groups")
-                    .document(groupId)
-                    .get()
-                    .addOnSuccessListener(snapshot -> {
-                        String role = snapshot.getString("members." + currentUid + ".role");
-                        if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
-                            new AlertDialog.Builder(requireContext())
-                                    .setTitle("Confirmation")
-                                    .setMessage("Voulez-vous vraiment vider tout l’historique du groupe ?")
-                                    .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
-                                    .setNegativeButton("Annuler", null)
-                                    .show();
-                        } else {
-                            Toast.makeText(getContext(), "Permission refusée", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        });
+        btnVider.setOnClickListener(v -> {
+            if (!"Propriétaire".equals(currentUserRole) && !"Administrateur".equals(currentUserRole)) {
+                Toast.makeText(getContext(), "Permission refusée", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Confirmation")
+                    .setMessage("Voulez-vous vraiment vider tout l’historique du groupe ?")
+                    .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
+                    .setNegativeButton("Annuler", null)
+                    .show();
+        });
 
         charger.run();
         return view;
     }
-
     private void chargerHistoriqueGroupe() {
         String tri = spinnerTri.getSelectedItem().toString();
         String recherche = searchView.getQuery().toString().trim();
