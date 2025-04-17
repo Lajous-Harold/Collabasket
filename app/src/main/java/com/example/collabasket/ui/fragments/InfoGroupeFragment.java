@@ -87,8 +87,8 @@ public class InfoGroupeFragment extends Fragment {
                     for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
                         String uid = entry.getKey();
                         Map<String, Object> infos = entry.getValue();
-                        String username = (String) infos.get("username");
-                        String phone = (String) infos.get("phone");
+                        String username = (String) infos.get("userName");
+                        String phone = (String) infos.get("numero");
                         String role = (String) infos.get("role");
 
                         TextView tv = new TextView(getContext());
