@@ -60,6 +60,18 @@ Utilité : Affiche le nom du groupe, les membres avec nom + numéro, et permettr
             android:showDividers="middle"
             android:dividerPadding="8dp" />
 
+        <Button
+            android:id="@+id/btn_gestion_permissions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gérer les permissions"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center_horizontal"
+            android:backgroundTint="@android:color/holo_blue_dark"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
+
+
         <!-- Bouton Quitter -->
         <Button
             android:id="@+id/btn_quitter_groupe"
@@ -83,5 +95,6 @@ Utilité : Affiche le nom du groupe, les membres avec nom + numéro, et permettr
             android:backgroundTint="@android:color/holo_red_light"
             android:textColor="@android:color/white"
             android:visibility="gone" />
+
     </LinearLayout>
 </ScrollView>
