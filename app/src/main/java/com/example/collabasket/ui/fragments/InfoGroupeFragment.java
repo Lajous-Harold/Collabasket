@@ -13,9 +13,8 @@ import androidx.fragment.app.Fragment;
 import com.example.collabasket.R;
 import com.example.collabasket.utils.GroupesUtils;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.List;
 import java.util.Map;
 
 public class InfoGroupeFragment extends Fragment {
@@ -63,89 +62,39 @@ public class InfoGroupeFragment extends Fragment {
                 .document(groupId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        nomGroupe.setText(documentSnapshot.getString("groupName"));
+                    if (!documentSnapshot.exists()) return;
 
-                        List<Map<String, Object>> membres = (List<Map<String, Object>>) documentSnapshot.get("members");
-                        listeMembres.removeAllViews();
+                    nomGroupe.setText(documentSnapshot.getString("groupName"));
 
-                        for (Map<String, Object> membre : membres) {
-                            if (currentUserId.equals(membre.get("userId"))) {
-                                currentUserRole = (String) membre.get("role");
-                                break;
-                            }
-                        }
+                    Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) documentSnapshot.get("members");
+                    if (membres == null) return;
 
-                        for (Map<String, Object> membre : membres) {
-                            String userId = (String) membre.get("userId");
-                            String username = (String) membre.get("userName");
-                            String numero = (String) membre.get("numero");
-                            String role = (String) membre.get("role");
+                    listeMembres.removeAllViews();
 
-                            LinearLayout ligne = new LinearLayout(getContext());
-                            ligne.setOrientation(LinearLayout.HORIZONTAL);
-                            ligne.setPadding(0, 8, 0, 8);
+                    // Déterminer le rôle de l'utilisateur actuel
+                    if (membres.containsKey(currentUserId)) {
+                        currentUserRole = (String) membres.get(currentUserId).get("role");
+                    }
 
-                            TextView textView = new TextView(getContext());
-                            textView.setText(username + " - " + numero + " [" + role + "]");
-                            textView.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-                            ligne.addView(textView);
+                    // Afficher ou non les boutons selon le rôle
+                    if ("Propriétaire".equals(currentUserRole)) {
+                        btnSupprimer.setVisibility(View.VISIBLE);
+                    } else {
+                        btnQuitter.setVisibility(View.VISIBLE);
+                    }
 
-                            if (!currentUserId.equals(userId) &&
-                                    ("Propriétaire".equals(currentUserRole) || ("Administrateur".equals(currentUserRole) && "Membre".equals(role)))) {
-                                Button btnModifier = new Button(getContext());
-                                btnModifier.setText("Modifier");
-                                btnModifier.setOnClickListener(v -> afficherDialogueRole(userId, username, role));
-                                ligne.addView(btnModifier);
-                            }
+                    // Affichage dynamique des membres
+                    for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
+                        String uid = entry.getKey();
+                        Map<String, Object> infos = entry.getValue();
+                        String username = (String) infos.get("username");
+                        String phone = (String) infos.get("phone");
+                        String role = (String) infos.get("role");
 
-                            listeMembres.addView(ligne);
-                        }
-
-                        if ("Propriétaire".equals(currentUserRole)) {
-                            btnSupprimer.setVisibility(View.VISIBLE);
-                            btnSupprimer.setOnClickListener(v -> GroupesUtils.supprimerGroupe(getContext(), groupId));
-                        } else {
-                            btnQuitter.setVisibility(View.VISIBLE);
-                            btnQuitter.setOnClickListener(v -> GroupesUtils.quitterGroupe(getContext(), groupId, currentUserId));
-                        }
+                        TextView tv = new TextView(getContext());
+                        tv.setText(username + " (" + phone + ") - " + role);
+                        listeMembres.addView(tv);
                     }
                 });
-    }
-
-    private void afficherDialogueRole(String userId, String username, String roleActuel) {
-        String[] roles = {"Membre", "Administrateur", "Propriétaire"};
-
-        new AlertDialog.Builder(getContext())
-                .setTitle("Changer le rôle de " + username)
-                .setSingleChoiceItems(roles, getRoleIndex(roleActuel, roles), null)
-                .setPositiveButton("Valider", (dialog, which) -> {
-                    ListView lw = ((AlertDialog) dialog).getListView();
-                    String selectedRole = roles[lw.getCheckedItemPosition()];
-
-                    if ("Propriétaire".equals(selectedRole) && "Propriétaire".equals(currentUserRole)) {
-                        new AlertDialog.Builder(getContext())
-                                .setTitle("Transférer la propriété")
-                                .setMessage("Êtes-vous sûr de transférer la propriété à " + username + " ? Vous deviendrez administrateur.")
-                                .setPositiveButton("Confirmer", (d, w) -> {
-                                    GroupesUtils.transfererPropriete(groupId, userId, currentUserId);
-                                    chargerInfosGroupe();
-                                })
-                                .setNegativeButton("Annuler", null)
-                                .show();
-                    } else {
-                        GroupesUtils.modifierRole(groupId, userId, selectedRole);
-                        chargerInfosGroupe();
-                    }
-                })
-                .setNegativeButton("Annuler", null)
-                .show();
-    }
-
-    private int getRoleIndex(String role, String[] roles) {
-        for (int i = 0; i < roles.length; i++) {
-            if (roles[i].equals(role)) return i;
-        }
-        return 0;
     }
 }

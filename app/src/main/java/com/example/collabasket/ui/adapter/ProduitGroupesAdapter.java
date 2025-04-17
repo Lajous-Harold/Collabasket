@@ -1,5 +1,7 @@
 package com.example.collabasket.ui.adapter;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,10 +16,14 @@ import com.example.collabasket.R;
 import com.example.collabasket.model.ProduitGroupes;
 import com.example.collabasket.model.ProduitGroupesHistorique;
 import com.example.collabasket.utils.ProduitGroupesDiffCallback;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAdapter.ProduitViewHolder> {
 
@@ -57,7 +63,6 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         ProduitAvecId produitAvecId = produits.get(position);
         ProduitGroupes produit = produitAvecId.produit;
 
-        // Affichage du nom + quantité + catégorie
         String quantite = (produit.getQuantite() % 1 == 0)
                 ? String.valueOf((int) produit.getQuantite())
                 : String.valueOf(produit.getQuantite());
@@ -66,8 +71,8 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
         holder.detailsProduit.setText(produit.getCategorie());
         holder.ajoutePar.setText("Ajouté par : " + produit.getAjoutePar());
 
-        holder.checkbox.setOnCheckedChangeListener(null);
-        holder.checkbox.setChecked(produit.isCoche());
+        holder.checkbox_produit.setOnCheckedChangeListener(null);
+        holder.checkbox_produit.setChecked(produit.isCoche());
 
         if (produit.isCoche()) {
             holder.nomProduit.setPaintFlags(holder.nomProduit.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
@@ -77,41 +82,74 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
             holder.btnAchete.setVisibility(View.GONE);
         }
 
-        holder.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            produit.setCoche(isChecked);
-            notifyItemChanged(position);
-
-            firestore.collection("groups")
-                    .document(groupId)
-                    .collection("produits")
-                    .document(produitAvecId.id)
-                    .update("coche", isChecked);
+        holder.btnSupprimer.setOnClickListener(v -> {
+            Context context = holder.itemView.getContext();
+            new AlertDialog.Builder(context)
+                    .setTitle("Confirmation")
+                    .setMessage("Supprimer ce produit ?")
+                    .setPositiveButton("Oui", (dialog, which) -> verifierEtSupprimer(holder.getAdapterPosition()))
+                    .setNegativeButton("Annuler", null)
+                    .show();
         });
 
         holder.btnAchete.setOnClickListener(v -> {
-            ajouterDansHistoriqueEtSupprimer(produitAvecId.id, produit, holder);
-        });
-
-        holder.btnSupprimer.setOnClickListener(v -> {
-            ajouterDansHistoriqueEtSupprimer(produitAvecId.id, produit, holder);
+            Context context = holder.itemView.getContext();
+            new AlertDialog.Builder(context)
+                    .setTitle("Confirmation")
+                    .setMessage("Marquer ce produit comme acheté ?")
+                    .setPositiveButton("Oui", (dialog, which) -> verifierEtMarquerAchete(holder.getAdapterPosition()))
+                    .setNegativeButton("Annuler", null)
+                    .show();
         });
     }
 
-    private void ajouterDansHistoriqueEtSupprimer(String docId, ProduitGroupes produit, ProduitViewHolder holder) {
-        ProduitGroupesHistorique historique = new ProduitGroupesHistorique(produit);
+    private void verifierEtSupprimer(int position) {
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        firestore.collection("groups").document(groupId).get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                DocumentSnapshot member = document;
+                String role = document.getString("members." + currentUid + ".role");
+                if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
+                    supprimer(position);
+                } else {
+                    Toast.makeText(null, "Permission refusée", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void verifierEtMarquerAchete(int position) {
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        firestore.collection("groups").document(groupId).get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                String role = document.getString("members." + currentUid + ".role");
+                if ("Propriétaire".equals(role) || "Administrateur".equals(role)) {
+                    marquerAchete(position);
+                } else {
+                    Toast.makeText(null, "Permission refusée", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void supprimer(int position) {
+        ProduitAvecId produitAvecId = produits.get(position);
 
         firestore.collection("groups")
                 .document(groupId)
-                .collection("historique")
-                .add(historique)
+                .collection("produits")
+                .document(produitAvecId.id)
+                .delete()
                 .addOnSuccessListener(aVoid -> {
                     firestore.collection("groups")
                             .document(groupId)
-                            .collection("produits")
-                            .document(docId)
-                            .delete()
-                            .addOnSuccessListener(v -> Toast.makeText(holder.itemView.getContext(), "Produit archivé", Toast.LENGTH_SHORT).show());
+                            .collection("historique")
+                            .add(new ProduitGroupesHistorique(produitAvecId.produit));
                 });
+    }
+
+    private void marquerAchete(int position) {
+        supprimer(position);
     }
 
     @Override
@@ -120,20 +158,19 @@ public class ProduitGroupesAdapter extends RecyclerView.Adapter<ProduitGroupesAd
     }
 
     static class ProduitViewHolder extends RecyclerView.ViewHolder {
-
         TextView nomProduit, detailsProduit, ajoutePar;
-        CheckBox checkbox;
-        ImageButton btnSupprimer;
+        CheckBox checkbox_produit;
         Button btnAchete;
+        ImageButton btnSupprimer;
 
         public ProduitViewHolder(@NonNull View itemView) {
             super(itemView);
             nomProduit = itemView.findViewById(R.id.text_nom_produit);
             detailsProduit = itemView.findViewById(R.id.text_details_produit);
             ajoutePar = itemView.findViewById(R.id.text_ajoute_par);
-            checkbox = itemView.findViewById(R.id.checkbox_produit);
-            btnSupprimer = itemView.findViewById(R.id.btn_supprimer);
+            checkbox_produit = itemView.findViewById(R.id.checkbox_produit);
             btnAchete = itemView.findViewById(R.id.btn_achete);
+            btnSupprimer = itemView.findViewById(R.id.btn_supprimer);
         }
     }
 }

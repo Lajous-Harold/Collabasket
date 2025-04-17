@@ -120,10 +120,10 @@ public class HistoriquePersoFragment extends Fragment {
     private void chargerHistorique() {
         String tri = spinnerTri.getSelectedItem().toString();
         String recherche = searchView.getQuery().toString().trim();
-        String categorie = spinnerCategorie.getSelectedItem().toString();
-        if ("Toutes".equals(categorie)) categorie = "";
+        String selectedCategorie = spinnerCategorie.getSelectedItem().toString();
+        String categorie = "Toutes".equals(selectedCategorie) ? "" : selectedCategorie;
 
-        HistoriqueLoader.loadHistorique(tri, recherche, categorie, resultList -> {
+        HistoriqueLoader.loadHistoriquePerso(tri, recherche, categorie, resultList -> {
             adapter.setProduits(resultList);
         }, () -> {
             Toast.makeText(getContext(), "Erreur lors du chargement de l'historique", Toast.LENGTH_SHORT).show();

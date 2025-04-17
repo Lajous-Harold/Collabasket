@@ -15,6 +15,7 @@ import com.example.collabasket.model.ProduitGroupes;
 import com.example.collabasket.model.ProduitGroupesHistorique;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.util.List;
 
@@ -69,28 +70,41 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
                     .addOnSuccessListener(documentSnapshot -> {
                         String currentUsername = documentSnapshot.getString("username");
 
-                        ProduitGroupes nouveauProduit = new ProduitGroupes(
-                                produit.nom,
-                                produit.categorie,
-                                produit.quantite,
-                                produit.unite,
-                                groupId,
-                                currentUsername != null ? currentUsername : "Inconnu");
-
                         FirebaseFirestore.getInstance()
                                 .collection("groups")
                                 .document(groupId)
                                 .collection("produits")
-                                .add(nouveauProduit)
-                                .addOnSuccessListener(documentReference -> Toast.makeText(holder.itemView.getContext(), "Produit ajouté", Toast.LENGTH_SHORT).show())
-                                .addOnFailureListener(e -> Toast.makeText(holder.itemView.getContext(), "Erreur lors de l'ajout", Toast.LENGTH_SHORT).show());
+                                .whereEqualTo("nom", produit.nom)
+                                .whereEqualTo("categorie", produit.categorie)
+                                .whereEqualTo("unite", produit.unite)
+                                .whereEqualTo("quantite", produit.quantite)
+                                .get()
+                                .addOnSuccessListener(query -> {
+                                    if (query.isEmpty()) {
+                                        ProduitGroupes nouveauProduit = new ProduitGroupes(
+                                                produit.nom,
+                                                produit.categorie,
+                                                produit.quantite,
+                                                produit.unite,
+                                                groupId,
+                                                currentUsername != null ? currentUsername : "Inconnu"
+                                        );
+                                        FirebaseFirestore.getInstance()
+                                                .collection("groups")
+                                                .document(groupId)
+                                                .collection("produits")
+                                                .add(nouveauProduit);
+                                    } else {
+                                        Toast.makeText(holder.itemView.getContext(), "Ce produit existe déjà dans la liste", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     });
         });
     }
 
     @Override
     public int getItemCount() {
-        return produits != null ? produits.size() : 0;
+        return produits.size();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -101,7 +115,7 @@ public class ProduitGroupesHistoriqueAdapter extends RecyclerView.Adapter<Produi
             super(itemView);
             nom = itemView.findViewById(R.id.nom_historique);
             categorie = itemView.findViewById(R.id.categorie_historique);
-            ajoutePar = itemView.findViewById(R.id.ajoute_par_historique);
+            ajoutePar = itemView.findViewById(R.id.text_ajoute_par);
             btnAjouter = itemView.findViewById(R.id.btn_ajouter_depuis_historique);
         }
     }

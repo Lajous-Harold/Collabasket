@@ -13,6 +13,9 @@ import com.example.collabasket.R;
 import com.example.collabasket.model.Groupes;
 import com.example.collabasket.utils.GroupesDiffCallback;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GroupesAdapter extends ListAdapter<Groupes, GroupesAdapter.GroupViewHolder> {
 
     public interface OnGroupClickListener {
@@ -20,10 +23,15 @@ public class GroupesAdapter extends ListAdapter<Groupes, GroupesAdapter.GroupVie
     }
 
     private final OnGroupClickListener listener;
+    private final Map<String, String> rolesParGroupe = new HashMap<>();
 
     public GroupesAdapter(OnGroupClickListener listener) {
         super(new GroupesDiffCallback());
         this.listener = listener;
+    }
+
+    public void setRolePourGroupe(String groupId, String role) {
+        rolesParGroupe.put(groupId, role);
     }
 
     @NonNull
@@ -37,7 +45,12 @@ public class GroupesAdapter extends ListAdapter<Groupes, GroupesAdapter.GroupVie
     @Override
     public void onBindViewHolder(@NonNull GroupViewHolder holder, int position) {
         Groupes group = getItem(position);
-        holder.textGroupName.setText(group.getGroupName());
+        String nomGroupe = group.getGroupName();
+        String role = rolesParGroupe.getOrDefault(group.getId(), "");
+        if (!role.isEmpty()) {
+            nomGroupe += " (" + role + ")";
+        }
+        holder.textGroupName.setText(nomGroupe);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
