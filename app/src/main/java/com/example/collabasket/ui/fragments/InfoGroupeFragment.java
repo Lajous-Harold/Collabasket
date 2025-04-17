@@ -187,7 +187,7 @@ public class InfoGroupeFragment extends Fragment {
             String username = (String) infos.get("userName");
             String roleActuel = (String) infos.get("role");
 
-            if (uid.equals(currentUserId)) continue; // Ne pas gérer son propre rôle
+            if (uid.equals(currentUserId)) continue; // Ne pas modifier son propre rôle
 
             TextView label = new TextView(requireContext());
             label.setText(username + " - Actuel : " + roleActuel);
@@ -216,10 +216,10 @@ public class InfoGroupeFragment extends Fragment {
                     String tag = (String) sp.getTag();
                     String[] parts = tag.split("\\|");
                     String uid = parts[0];
-                    String ancien = parts[1];
-
+                    String roleActuel = parts[1];
                     String selection = (String) sp.getSelectedItem();
-                    if (!selection.equals(ancien)) {
+
+                    if (!selection.equals(roleActuel)) {
                         if ("Propriétaire".equals(selection)) {
                             nouveauProprietaire[0] = uid;
                         }
@@ -228,13 +228,23 @@ public class InfoGroupeFragment extends Fragment {
                 }
             }
 
-            appliquerChangementsDeRoles(modifications, nouveauProprietaire[0]);
+            if (modifications.isEmpty()) return;
+
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Confirmation")
+                    .setMessage("Souhaitez-vous vraiment appliquer ces changements de rôle ?")
+                    .setPositiveButton("Oui", (dialog2, which2) -> {
+                        boolean jeMeRetrograde = currentUserId.equals(nouveauProprietaire[0]);
+                        appliquerChangementsDeRoles(modifications, nouveauProprietaire[0], jeMeRetrograde);
+                    })
+                    .setNegativeButton("Annuler", null)
+                    .show();
         });
 
         builder.setNegativeButton("Annuler", null);
         builder.show();
     }
-    private void appliquerChangementsDeRoles(Map<String, String> changements, @Nullable String nouveauProprietaireId) {
+    private void appliquerChangementsDeRoles(Map<String, String> changements, @Nullable String nouveauProprietaireId, boolean jeMeRetrograde) {
         DocumentReference groupRef = FirebaseFirestore.getInstance()
                 .collection("groups")
                 .document(groupId);
@@ -245,7 +255,6 @@ public class InfoGroupeFragment extends Fragment {
             Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
             if (membres == null) return;
 
-            // Si un nouveau propriétaire est désigné, rétrograder l'ancien
             if (nouveauProprietaireId != null) {
                 for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
                     String uid = entry.getKey();
@@ -257,7 +266,6 @@ public class InfoGroupeFragment extends Fragment {
                 membres.get(nouveauProprietaireId).put("role", "Propriétaire");
             }
 
-            // Appliquer les autres changements
             for (Map.Entry<String, String> entry : changements.entrySet()) {
                 String uid = entry.getKey();
                 String nouveauRole = entry.getValue();
@@ -269,7 +277,17 @@ public class InfoGroupeFragment extends Fragment {
             groupRef.update("members", membres)
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(getContext(), "Permissions mises à jour", Toast.LENGTH_SHORT).show();
-                        chargerInfosGroupe(); // refresh affichage
+
+                        if (jeMeRetrograde) {
+                            // Rechargement complet : le menu de gestion disparaît
+                            requireActivity().getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.fragment_container, new GroupesFragment()) // ou un refresh plus fin
+                                    .commit();
+                        } else {
+                            // Simple refresh
+                            chargerInfosGroupe();
+                        }
                     })
                     .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la mise à jour", Toast.LENGTH_SHORT).show());
         });
