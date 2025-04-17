@@ -22,7 +22,7 @@ public class InvitationHandlerActivity extends AppCompatActivity {
     private String currentUid;
     private TextView textMessage;
     private Button btnJoin;
-    private Button btnRefuser
+    private Button btnRefuser;
     private ProgressBar progressBar;
     private FirebaseFirestore db;
 
