@@ -1,14 +1,19 @@
 package com.example.collabasket.ui.fragments;
 
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Switch;
 import android.widget.Toast;
+import android.Manifest;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.collabasket.R;
@@ -37,6 +42,20 @@ public class NotificationsFragment extends Fragment {
         switchProduitSupprime = view.findViewById(R.id.switch_produit_supprime);
         switchMembreAjoute = view.findViewById(R.id.switch_membre_ajoute);
         switchGroupeCree = view.findViewById(R.id.switch_groupe_cree);
+
+        // Vérification de la permission avant d'afficher les préférences
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Demander la permission si non accordée
+                ActivityCompat.requestPermissions(
+                        requireActivity(),
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        101 // Code de requête
+                );
+                return view; // Ne charge pas les préférences avant que la permission soit accordée
+            }
+        }
 
         chargerPreferences();
 
@@ -75,5 +94,20 @@ public class NotificationsFragment extends Fragment {
         firestore.collection("users")
                 .document(uid)
                 .update("notificationsSettings." + champ, valeur);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 101) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission accordée, recharge les préférences
+                chargerPreferences();
+            } else {
+                // Permission refusée, afficher un toast ou désactiver les fonctionnalités
+                Toast.makeText(getContext(), "Les notifications n'ont pas été activées", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

@@ -137,12 +137,12 @@ exports.onMembreAjoute = onDocumentUpdated(
     const before = event.data?.before?.fields;
     const after = event.data?.after?.fields;
 
-    const beforeIds = before?.memberIds?.arrayValue?.values?.map((v) => v.stringValue) || [];
-    const afterIds = after?.memberIds?.arrayValue?.values?.map((v) => v.stringValue) || [];
+    const beforeMembers = before?.members?.mapValue?.fields || {};
+    const afterMembers = after?.members?.mapValue?.fields || {};
 
-    const groupName = after?.nom?.stringValue || "un groupe";
+    const groupName = after?.groupName?.stringValue || "un groupe";
 
-    const nouveaux = afterIds.filter((id) => !beforeIds.includes(id));
+    const nouveaux = Object.keys(afterMembers).filter((id) => !beforeMembers.hasOwnProperty(id));
     if (nouveaux.length === 0) return;
 
     for (const nouveauId of nouveaux) {
@@ -152,7 +152,7 @@ exports.onMembreAjoute = onDocumentUpdated(
       const title = "Nouveau membre";
       const body = `${nouveauNom} a rejoint le groupe ${groupName}`;
 
-      const autres = afterIds.filter((id) => id !== nouveauId);
+      const autres = Object.keys(afterMembers).filter((id) => id !== nouveauId);
       const tokens = [];
 
       for (const uid of autres) {

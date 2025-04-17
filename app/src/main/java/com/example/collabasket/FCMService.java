@@ -2,11 +2,15 @@ package com.example.collabasket;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.Manifest;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -41,13 +45,30 @@ public class FCMService extends FirebaseMessagingService {
         if (title == null) title = "Collabasket";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "collabasket_channel")
-                .setSmallIcon(R.drawable.ic_notification) // Remplace par ton icône
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            boolean permissionGranted = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED;
+
+            // Met à jour Firestore en fonction de la permission
+            String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(currentUid)
+                    .update("notificationsSettings.global", permissionGranted);
+
+            if (!permissionGranted) {
+                return;  // Ne pas envoyer la notification si la permission n'est pas accordée
+            }
+        }
+
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(new Random().nextInt(), builder.build());
     }
 
