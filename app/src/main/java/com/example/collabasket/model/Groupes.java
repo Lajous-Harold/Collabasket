@@ -9,14 +9,14 @@ public class Groupes {
     private String id;  // Nécessaire pour DiffUtil
     private String groupName;
     private String ownerId;
-    private List<Map<String, String>> members;
+    private Map<String, Map<String, String>> members;
     private List<String> memberIds;
 
     public Groupes() {
         // Nécessaire pour Firestore
     }
 
-    public Groupes(String groupName, String ownerId, List<Map<String, String>> members, List<String> memberIds) {
+    public Groupes(String groupName, String ownerId, Map<String, Map<String, String>> members, List<String> memberIds) {
         this.groupName = groupName;
         this.ownerId = ownerId;
         this.members = members;
@@ -48,14 +48,13 @@ public class Groupes {
         this.ownerId = ownerId;
     }
 
-    public List<Map<String, String>> getMembers() {
+    public Map<String, Map<String, String>> getMembers() {
         return members;
     }
 
-    public void setMembers(List<Map<String, String>> members) {
+    public void setMembers(Map<String, Map<String, String>> members) {
         this.members = members;
     }
-
     public List<String> getMemberIds() {
         return memberIds;
     }

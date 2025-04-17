@@ -15,6 +15,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -81,44 +82,61 @@ public class CompleteRegistrationActivity extends AppCompatActivity {
             return;
         }
 
-        AuthCredential emailCredential = EmailAuthProvider.getCredential(email, password);
-        mAuth.getCurrentUser().linkWithCredential(emailCredential)
-                .addOnSuccessListener(linked -> {
-                    FirebaseUser user = linked.getUser();
-                    if (user != null) {
-                        user.sendEmailVerification().addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                Map<String, Object> userData = new HashMap<>();
-                                userData.put("uid", user.getUid());
-                                userData.put("username", username);
-                                userData.put("email", email);
-                                userData.put("phone", verifiedPhone);
-                                userData.put("createdAt", FieldValue.serverTimestamp());
-
-                                Map<String, Object> defaultNotifications = new HashMap<>();
-                                defaultNotifications.put("global", true);
-                                defaultNotifications.put("produitAjoute", true);
-                                defaultNotifications.put("produitSupprime", true);
-                                defaultNotifications.put("membreAjoute", true);
-                                defaultNotifications.put("groupeCree", true);
-
-                                userData.put("notificationsSettings", defaultNotifications);
-
-                                firestore.collection("users").document(user.getUid())
-                                        .set(userData)
-                                        .addOnSuccessListener(unused -> {
-                                            Toast.makeText(this, "Email de vérification envoyé à " + email, Toast.LENGTH_LONG).show();
-                                            startActivity(new Intent(this, LoginActivity.class));
-                                            finish();
-                                        });
-                            } else {
-                                Toast.makeText(this, "Erreur lors de l'envoi de l'email", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+        // ✅ Vérifie si l’email est déjà utilisé avant de linker
+        mAuth.fetchSignInMethodsForEmail(email)
+                .addOnSuccessListener(result -> {
+                    List<String> providers = result.getSignInMethods();
+                    if (providers != null && !providers.isEmpty()) {
+                        Toast.makeText(this, "Cet email est déjà lié à un autre compte.", Toast.LENGTH_LONG).show();
+                    } else {
+                        // 🔐 L’email n’est pas encore utilisé
+                        AuthCredential emailCredential = EmailAuthProvider.getCredential(email, password);
+                        mAuth.getCurrentUser().linkWithCredential(emailCredential)
+                                .addOnSuccessListener(linked -> {
+                                    FirebaseUser user = linked.getUser();
+                                    if (user != null) {
+                                        handleAccountCreation(user, username, email, verifiedPhone);
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Erreur : " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Erreur lors de la vérification de l'email : " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void handleAccountCreation(FirebaseUser user, String username, String email, String phone) {
+        user.sendEmailVerification().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Map<String, Object> userData = new HashMap<>();
+                userData.put("uid", user.getUid());
+                userData.put("username", username);
+                userData.put("email", email);
+                userData.put("phone", phone);
+                userData.put("createdAt", FieldValue.serverTimestamp());
+
+                Map<String, Object> defaultNotifications = new HashMap<>();
+                defaultNotifications.put("global", true);
+                defaultNotifications.put("produitAjoute", true);
+                defaultNotifications.put("produitSupprime", true);
+                defaultNotifications.put("membreAjoute", true);
+                defaultNotifications.put("groupeCree", true);
+
+                userData.put("notificationsSettings", defaultNotifications);
+
+                firestore.collection("users").document(user.getUid())
+                        .set(userData)
+                        .addOnSuccessListener(unused -> {
+                            Toast.makeText(this, "Email de vérification envoyé à " + email, Toast.LENGTH_LONG).show();
+                            startActivity(new Intent(this, LoginActivity.class));
+                            finish();
+                        });
+            } else {
+                Toast.makeText(this, "Erreur lors de l'envoi de l'email", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

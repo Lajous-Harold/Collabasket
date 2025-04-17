@@ -134,7 +134,14 @@ public class GroupesFragment extends Fragment {
                                     List<String> memberIds = new ArrayList<>();
                                     memberIds.add(userId);
 
-                                    Groupes newGroup = new Groupes(groupName, userId, members, memberIds);
+                                    Map<String, Map<String, String>> membersMap = new HashMap<>();
+                                    for (Map<String, String> membre : members) {
+                                        if (membre.containsKey("userId")) {
+                                            membersMap.put(membre.get("userId"), membre);
+                                        }
+                                    }
+                                    Groupes newGroup = new Groupes(groupName, userId, membersMap, memberIds);
+
 
                                     firestore.collection("groups")
                                             .add(newGroup)
