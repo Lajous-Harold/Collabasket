@@ -29,7 +29,6 @@ public class NotificationsFragment extends Fragment {
     private FirebaseFirestore firestore;
     private String uid;
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_notifications, container, false);
@@ -61,7 +60,6 @@ public class NotificationsFragment extends Fragment {
 
         return view;
     }
-
     private void chargerPreferences() {
         firestore.collection("users")
                 .document(uid)
@@ -81,7 +79,6 @@ public class NotificationsFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors du chargement des préférences", Toast.LENGTH_SHORT).show());
     }
-
     private void setListeners() {
         switchGlobal.setOnCheckedChangeListener((btn, isChecked) -> update("global", isChecked));
         switchProduitAjoute.setOnCheckedChangeListener((btn, isChecked) -> update("produitAjoute", isChecked));
@@ -100,14 +97,25 @@ public class NotificationsFragment extends Fragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == 101) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission accordée, recharge les préférences
-                chargerPreferences();
-            } else {
-                // Permission refusée, afficher un toast ou désactiver les fonctionnalités
-                Toast.makeText(getContext(), "Les notifications n'ont pas été activées", Toast.LENGTH_SHORT).show();
-            }
+        // Gère toutes les permissions demandées ici
+        switch (requestCode) {
+            case 101:  // Code pour POST_NOTIFICATIONS
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission accordée, activer les notifications
+                    String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(currentUid)
+                            .update("notificationsSettings.global", true); // Activer les notifications
+                } else {
+                    // Permission refusée, afficher un message
+                    Toast.makeText(getContext(), "Les notifications n'ont pas été activées", Toast.LENGTH_SHORT).show();
+                }
+                break;
+
+            // Ajouter d'autres cases si tu as d'autres permissions à gérer
+            default:
+                break;
         }
     }
 }
