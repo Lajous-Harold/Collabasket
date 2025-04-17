@@ -14,6 +14,7 @@ import com.example.collabasket.R;
 import com.example.collabasket.utils.GroupesUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
 
 import java.util.Map;
 
@@ -79,8 +80,24 @@ public class InfoGroupeFragment extends Fragment {
                     // Afficher ou non les boutons selon le rôle
                     if ("Propriétaire".equals(currentUserRole)) {
                         btnSupprimer.setVisibility(View.VISIBLE);
+                        btnSupprimer.setOnClickListener(v -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Supprimer le groupe")
+                                    .setMessage("Cette action est irréversible. Confirmez-vous ?")
+                                    .setPositiveButton("Oui", (dialog, which) -> supprimerGroupe())
+                                    .setNegativeButton("Annuler", null)
+                                    .show();
+                        });
                     } else {
                         btnQuitter.setVisibility(View.VISIBLE);
+                        btnQuitter.setOnClickListener(v -> {
+                            new AlertDialog.Builder(requireContext())
+                                    .setTitle("Quitter le groupe")
+                                    .setMessage("Souhaitez-vous vraiment quitter ce groupe ?")
+                                    .setPositiveButton("Oui", (dialog, which) -> quitterGroupe())
+                                    .setNegativeButton("Annuler", null)
+                                    .show();
+                        });
                     }
 
                     // Affichage dynamique des membres
@@ -97,4 +114,35 @@ public class InfoGroupeFragment extends Fragment {
                     }
                 });
     }
+    private void quitterGroupe() {
+        FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .update(
+                        "members." + currentUserId, FieldValue.delete(),
+                        "memberIds", FieldValue.arrayRemove(currentUserId)
+                )
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(getContext(), "Vous avez quitté le groupe", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, new GroupesFragment())
+                            .commit();
+                });
+    }
+
+    private void supprimerGroupe() {
+        FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId)
+                .delete()
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(getContext(), "Groupe supprimé", Toast.LENGTH_SHORT).show();
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, new GroupesFragment())
+                            .commit();
+                });
+    }
+
 }

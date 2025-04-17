@@ -62,6 +62,14 @@ public class ListeGroupesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_liste_groupes, container, false);
 
+        ImageButton btnRetour = rootView.findViewById(R.id.btn_retour_groupes);
+        btnRetour.setOnClickListener(v -> {
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new GroupesFragment())
+                    .commit();
+        });
+
         if (getArguments() != null) {
             groupId = getArguments() != null && getArguments().containsKey("groupId") ? getArguments().getString("groupId") : "";
             groupName = getArguments() != null && getArguments().containsKey("groupName") ? getArguments().getString("groupName") : "";
@@ -328,24 +336,26 @@ public class ListeGroupesFragment extends Fragment {
                 .document(groupId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    List<Map<String, Object>> members = (List<Map<String, Object>>) snapshot.get("members");
+                    Map<String, Object> members = (Map<String, Object>) snapshot.get("members");
                     List<String> memberIds = (List<String>) snapshot.get("memberIds");
 
                     String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     final String[] currentRole = { "Membre" };
 
-                    for (Map<String, Object> membre : members) {
-                        if (currentUid.equals(membre.get("userId"))) {
-                            currentRole[0] = membre.get("role") != null ? membre.get("role").toString() : "Membre";
-                            break;
+                    if (members != null && members.containsKey(currentUid)) {
+                        Map<String, Object> currentMember = (Map<String, Object>) members.get(currentUid);
+                        if (currentMember.get("role") != null) {
+                            currentRole[0] = currentMember.get("role").toString();
                         }
                     }
 
+                    String message = currentRole[0].equals("Propriétaire")
+                            ? "Vous êtes le Propriétaire. En quittant, le groupe sera supprimé pour tous. Confirmez-vous ?"
+                            : "Souhaitez-vous vraiment quitter ce groupe ?";
+
                     new AlertDialog.Builder(getContext())
                             .setTitle("Quitter le groupe")
-                            .setMessage(currentRole[0].equals("Propriétaire")
-                                    ? "Vous êtes le Propriétaire. En quittant, le groupe sera supprimé pour tous. Confirmez-vous ?"
-                                    : "Souhaitez-vous vraiment quitter ce groupe ?")
+                            .setMessage(message)
                             .setPositiveButton("Oui", (dialog, which) -> {
                                 if (currentRole[0].equals("Propriétaire")) {
                                     FirebaseFirestore.getInstance()
@@ -360,8 +370,12 @@ public class ListeGroupesFragment extends Fragment {
                                                         .commit();
                                             });
                                 } else {
-                                    members.removeIf(m -> currentUid.equals(m.get("userId")));
-                                    memberIds.removeIf(id1 -> id1.equals(currentUid));
+                                    if (members != null) {
+                                        members.remove(currentUid);
+                                    }
+                                    if (memberIds != null) {
+                                        memberIds.remove(currentUid);
+                                    }
 
                                     FirebaseFirestore.getInstance()
                                             .collection("groups")
@@ -380,7 +394,6 @@ public class ListeGroupesFragment extends Fragment {
                             .show();
                 });
     }
-
     private void showAddProduitDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_ajout_produit_groupes, null);
 
