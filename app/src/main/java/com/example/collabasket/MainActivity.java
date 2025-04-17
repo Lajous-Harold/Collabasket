@@ -2,11 +2,15 @@ package com.example.collabasket;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.collabasket.ui.fragments.CompteFragment;
@@ -14,8 +18,13 @@ import com.example.collabasket.ui.fragments.GroupesFragment;
 import com.example.collabasket.ui.fragments.ListeFragment;
 import com.example.collabasket.ui.fragments.ListeGroupesFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +35,17 @@ public class MainActivity extends AppCompatActivity {
         Log.d("DEBUG_STARTUP", "MainActivity onCreate lancé");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Vérifier si l'utilisateur est connecté
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            // Si l'utilisateur est connecté, vérifier et demander la permission des notifications
+            checkPermissionAndUpdateSettings();
+        } else {
+            // Si l'utilisateur n'est pas connecté, rediriger vers la page de connexion
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
 
         // Redirection depuis une invitation si présente
         Intent intent = getIntent();
@@ -58,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(this, "Erreur lors de l'accès au groupe", Toast.LENGTH_SHORT).show();
                     });
         }
-
-
 
         BottomNavigationView navView = findViewById(R.id.bottom_navigation);
 
@@ -120,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                         args.putString("groupName", "Groupe");
 
-
                         fragment.setArguments(args);
 
                         getSupportFragmentManager()
@@ -130,5 +147,45 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(this, e -> Log.e(TAG, "Erreur Dynamic Link : " + e.getMessage()));
+    }
+
+    // Vérifie et demande la permission pour les notifications si nécessaire
+    private void checkPermissionAndUpdateSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Demander la permission si non accordée
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        101); // Code de requête pour la permission
+            } else {
+                // Si la permission est déjà accordée, mettre à jour Firestore pour activer les notifications
+                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(currentUid)
+                        .update("notificationsSettings.global", true); // Activer les notifications
+            }
+        }
+    }
+
+    // Gérer la réponse à la demande de permission
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 101) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission accordée, mettre à jour Firestore pour activer les notifications
+                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(currentUid)
+                        .update("notificationsSettings.global", true); // Activer les notifications
+            } else {
+                // Permission refusée, afficher un message et ne pas activer les notifications
+                Toast.makeText(this, "Les notifications n'ont pas été activées", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
