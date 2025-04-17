@@ -52,26 +52,15 @@ public class HistoriquePersoFragment extends Fragment {
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back);
         toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
-        requireActivity().addMenuProvider(new MenuProvider() {
-            @Override
-            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
-                menuInflater.inflate(R.menu.menu_historique, menu);
-            }
-
-            @Override
-            public boolean onMenuItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.btn_vider_historique) {
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Confirmation")
-                            .setMessage("Voulez-vous vraiment supprimer tout l'historique ?")
-                            .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
-                            .setNegativeButton("Annuler", null)
-                            .show();
-                    return true;
-                }
-                return false;
-            }
-        }, getViewLifecycleOwner());
+        Button btnViderHistorique = view.findViewById(R.id.btn_vider_historique);
+        btnViderHistorique.setOnClickListener(v -> {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Confirmation")
+                    .setMessage("Voulez-vous vraiment supprimer tout l'historique ?")
+                    .setPositiveButton("Oui", (dialog, which) -> viderHistorique())
+                    .setNegativeButton("Annuler", null)
+                    .show();
+        });
 
         searchView = view.findViewById(R.id.search_view);
         spinnerTri = view.findViewById(R.id.spinner_tri);
