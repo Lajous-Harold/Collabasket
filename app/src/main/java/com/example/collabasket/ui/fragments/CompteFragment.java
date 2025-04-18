@@ -10,10 +10,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
+import android.content.res.Configuration;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.example.collabasket.LoginActivity;
@@ -25,18 +27,20 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.hbb20.CountryCodePicker;
 
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 public class CompteFragment extends Fragment {
 
     private TextView textEmail, textPhone, textUid;
     private EditText editNom;
     private Button btnUpdateNom, btnUpdatePassword, btnUpdatePhone;
-
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private FirebaseUser user;
+    private MaterialSwitch switchTheme;
 
     @Nullable
     @Override
@@ -57,13 +61,13 @@ public class CompteFragment extends Fragment {
         btnUpdateNom = view.findViewById(R.id.btn_update_nom);
         btnUpdatePassword = view.findViewById(R.id.btn_update_password);
         btnUpdatePhone = view.findViewById(R.id.btn_update_phone);
+        switchTheme = view.findViewById(R.id.switch_theme);
 
         if (user != null) {
             textEmail.setText(user.getEmail());
             textPhone.setText(user.getPhoneNumber());
             textUid.setText("UID : " + user.getUid());
 
-            // Charger le nom depuis Firestore
             firestore.collection("users").document(user.getUid())
                     .get()
                     .addOnSuccessListener(doc -> {
@@ -110,7 +114,6 @@ public class CompteFragment extends Fragment {
                             return;
                         }
 
-                        // Vérification via SMS
                         PhoneAuthOptions options = PhoneAuthOptions.newBuilder(FirebaseAuth.getInstance())
                                 .setPhoneNumber(fullPhone)
                                 .setTimeout(60L, java.util.concurrent.TimeUnit.SECONDS)
@@ -162,17 +165,26 @@ public class CompteFragment extends Fragment {
         Button btnLogout = view.findViewById(R.id.btn_logout);
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-
-            // Redirige vers la page de connexion
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             requireActivity().finish();
         });
 
+        // Initialisation du switch en fonction du thème système
+        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        switchTheme.setChecked(currentNightMode == Configuration.UI_MODE_NIGHT_YES);
+
+        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        });
+
         return view;
     }
-
 
     private void askCodeForVerification(String verificationId) {
         EditText inputCode = new EditText(getContext());
@@ -199,10 +211,32 @@ public class CompteFragment extends Fragment {
                     .addOnSuccessListener(unused -> {
                         Toast.makeText(getContext(), "Numéro mis à jour", Toast.LENGTH_SHORT).show();
                         textPhone.setText(user.getPhoneNumber());
+                        updateFcmToken();
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(getContext(), "Erreur : " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
         }
+    }
+
+    private void updateFcmToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM_TOKEN", "Erreur récupération token", task.getException());
+                        return;
+                    }
+
+                    String token = task.getResult();
+                    Log.d("FCM_TOKEN", "Token après maj numéro : " + token);
+
+                    String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(uid)
+                            .update("fcmToken", token)
+                            .addOnSuccessListener(aVoid -> Log.d("FCM_TOKEN", "Token mis à jour après modif numéro"))
+                            .addOnFailureListener(e -> Log.w("FCM_TOKEN", "Échec maj token", e));
+                });
     }
 }

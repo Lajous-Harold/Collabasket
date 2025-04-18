@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -36,18 +37,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Vérifier si l'utilisateur est connecté
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
-            // Si l'utilisateur est connecté, vérifier et demander la permission des notifications
             checkPermissionAndUpdateSettings();
         } else {
-            // Si l'utilisateur n'est pas connecté, rediriger vers la page de connexion
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
 
-        // Redirection depuis une invitation si présente
         Intent intent = getIntent();
         if (intent.hasExtra("redirectToGroupId")) {
             String groupId = intent.getStringExtra("redirectToGroupId");
@@ -103,19 +100,17 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Charger le fragment par défaut
         if (savedInstanceState == null) {
             navView.setSelectedItemId(R.id.nav_liste);
         }
 
-        // Gérer le lien dynamique s’il est présent
         handleDynamicLink(getIntent());
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent); // Important pour que getIntent() soit mis à jour
+        setIntent(intent);
         handleDynamicLink(intent);
     }
 
@@ -149,43 +144,57 @@ public class MainActivity extends AppCompatActivity {
                 .addOnFailureListener(this, e -> Log.e(TAG, "Erreur Dynamic Link : " + e.getMessage()));
     }
 
-    // Vérifie et demande la permission pour les notifications si nécessaire
     private void checkPermissionAndUpdateSettings() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                // Demander la permission si non accordée
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        101); // Code de requête pour la permission
+                        101);
             } else {
-                // Si la permission est déjà accordée, mettre à jour Firestore pour activer les notifications
-                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                FirebaseFirestore.getInstance()
-                        .collection("users")
-                        .document(currentUid)
-                        .update("notificationsSettings.global", true); // Activer les notifications
+                updateNotificationSettingsAndToken();
             }
+        } else {
+            updateNotificationSettingsAndToken();
         }
     }
 
-    // Gérer la réponse à la demande de permission
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == 101) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission accordée, mettre à jour Firestore pour activer les notifications
-                String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                FirebaseFirestore.getInstance()
-                        .collection("users")
-                        .document(currentUid)
-                        .update("notificationsSettings.global", true); // Activer les notifications
+                updateNotificationSettingsAndToken();
             } else {
-                // Permission refusée, afficher un message et ne pas activer les notifications
                 Toast.makeText(this, "Les notifications n'ont pas été activées", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void updateNotificationSettingsAndToken() {
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(currentUid)
+                .update("notificationsSettings.global", true);
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM_TOKEN", "Échec de la récupération du token", task.getException());
+                        return;
+                    }
+
+                    String token = task.getResult();
+                    Log.d("FCM_TOKEN", "Token obtenu : " + token);
+
+                    FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(currentUid)
+                            .update("fcmToken", token)
+                            .addOnSuccessListener(aVoid -> Log.d("FCM_TOKEN", "Token enregistré dans Firestore"))
+                            .addOnFailureListener(e -> Log.w("FCM_TOKEN", "Erreur d’enregistrement", e));
+                });
     }
 }

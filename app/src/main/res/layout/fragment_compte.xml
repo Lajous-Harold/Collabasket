@@ -4,6 +4,7 @@ Utilité : Affiche et permet la modification des informations du compte utilisat
 -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="24dp"
     android:layout_width="match_parent"
@@ -46,7 +47,7 @@ Utilité : Affiche et permet la modification des informations du compte utilisat
 
             <Button
                 android:id="@+id/btn_update_phone"
-                android:text="Modifier le numéro (à venir)"
+                android:text="Modifier le numéro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp" />
@@ -57,6 +58,54 @@ Utilité : Affiche et permet la modification des informations du compte utilisat
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="24dp"
+                android:weightSum="2">
+
+                <!-- Texte à gauche -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Thème de l'application"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+
+                <!-- Slider + icônes à droite -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="end|center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌞"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switch_theme"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:useMaterialThemeColors="true" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌙"
+                        android:textSize="20sp"
+                        android:layout_marginStart="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+
 
             <Button
                 android:id="@+id/btn_notifications"
