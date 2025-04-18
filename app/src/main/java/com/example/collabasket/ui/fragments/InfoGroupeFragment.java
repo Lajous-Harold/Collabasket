@@ -16,9 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.DocumentReference;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InfoGroupeFragment extends Fragment {
@@ -30,7 +28,6 @@ public class InfoGroupeFragment extends Fragment {
     private LinearLayout listeMembres;
     private Button btnQuitter;
     private Button btnSupprimer;
-    private Button btnGestionPermissions;
 
     @Nullable
     @Override
@@ -47,8 +44,6 @@ public class InfoGroupeFragment extends Fragment {
         listeMembres = view.findViewById(R.id.layout_membres);
         btnQuitter = view.findViewById(R.id.btn_quitter_groupe);
         btnSupprimer = view.findViewById(R.id.btn_supprimer_groupe);
-        btnGestionPermissions = view.findViewById(R.id.btn_gestion_permissions);
-        btnGestionPermissions.setVisibility(View.GONE);
 
         btnSupprimer.setVisibility(View.GONE);
         btnQuitter.setVisibility(View.GONE);
@@ -77,14 +72,12 @@ public class InfoGroupeFragment extends Fragment {
 
                     listeMembres.removeAllViews();
 
-                    // Déterminer le rôle de l'utilisateur actuel
                     if (membres.containsKey(currentUserId)) {
                         currentUserRole = (String) membres.get(currentUserId).get("role");
                     } else {
                         currentUserRole = "Membre";
                     }
 
-                    // Affichage des boutons selon le rôle
                     if ("Propriétaire".equals(currentUserRole)) {
                         btnSupprimer.setVisibility(View.VISIBLE);
                         btnSupprimer.setOnClickListener(v -> {
@@ -107,12 +100,6 @@ public class InfoGroupeFragment extends Fragment {
                         });
                     }
 
-                    // Afficher le bouton de gestion des permissions uniquement pour Propriétaire
-                    if ("Propriétaire".equals(currentUserRole)) {
-                        btnGestionPermissions.setVisibility(View.VISIBLE);
-                        btnGestionPermissions.setOnClickListener(v -> ouvrirInterfaceGestionPermissions(membres));
-                    }
-
                     for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
                         String uid = entry.getKey();
                         Map<String, Object> infos = entry.getValue();
@@ -133,7 +120,14 @@ public class InfoGroupeFragment extends Fragment {
                         tv.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
                         ligne.addView(tv);
 
-                        // Ajout du bouton uniquement si currentUser est Admin ET que le membre est un Membre
+                        if ("Propriétaire".equals(currentUserRole) && !uid.equals(currentUserId)) {
+                            Button btnChangerRole = new Button(getContext());
+                            btnChangerRole.setText("Changer rôle");
+                            btnChangerRole.setTextSize(12);
+                            btnChangerRole.setOnClickListener(v -> afficherPopupChoixRole(uid, username, role));
+                            ligne.addView(btnChangerRole);
+                        }
+
                         if ("Administrateur".equals(currentUserRole) && "Membre".equals(role)) {
                             Button btnPromouvoir = new Button(getContext());
                             btnPromouvoir.setText("Promouvoir");
@@ -147,6 +141,96 @@ public class InfoGroupeFragment extends Fragment {
 
                 });
     }
+
+    private void afficherPopupChoixRole(String uid, String username, String roleActuel) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Changer le rôle de " + username);
+
+        final String[] roles = {"Membre", "Administrateur", "Propriétaire"};
+        final int indexActuel = roleActuel.equals("Membre") ? 0 : roleActuel.equals("Administrateur") ? 1 : 2;
+
+        builder.setSingleChoiceItems(roles, indexActuel, null);
+
+        builder.setPositiveButton("Valider", (dialog, which) -> {
+            AlertDialog alertDialog = (AlertDialog) dialog;
+            int selected = alertDialog.getListView().getCheckedItemPosition();
+            String nouveauRole = roles[selected];
+
+            if (!nouveauRole.equals(roleActuel)) {
+                if ("Propriétaire".equals(nouveauRole)) {
+                    confirmerPassationProprietaire(uid);
+                } else {
+                    appliquerChangementRoleSimple(uid, nouveauRole);
+                }
+            }
+        });
+
+        builder.setNegativeButton("Annuler", null);
+        builder.show();
+    }
+
+    private void appliquerChangementRoleSimple(String uid, String nouveauRole) {
+        DocumentReference groupRef = FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId);
+
+        groupRef.get().addOnSuccessListener(snapshot -> {
+            if (!snapshot.exists()) return;
+
+            Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
+            if (membres == null || !membres.containsKey(uid)) return;
+
+            membres.get(uid).put("role", nouveauRole);
+
+            groupRef.update("members", membres)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Rôle mis à jour", Toast.LENGTH_SHORT).show();
+                        chargerInfosGroupe();
+                    });
+        });
+    }
+
+    private void confirmerPassationProprietaire(String nouveauUid) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Confirmer la passation")
+                .setMessage("Êtes-vous sûr de vouloir transférer la propriété à cet utilisateur ? Vous deviendrez Administrateur.")
+                .setPositiveButton("Confirmer", (dialog, which) -> appliquerPassationProprietaire(nouveauUid))
+                .setNegativeButton("Annuler", null)
+                .show();
+    }
+
+    private void appliquerPassationProprietaire(String nouveauUid) {
+        DocumentReference groupRef = FirebaseFirestore.getInstance()
+                .collection("groups")
+                .document(groupId);
+
+        groupRef.get().addOnSuccessListener(snapshot -> {
+            if (!snapshot.exists()) return;
+
+            Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
+            if (membres == null) return;
+
+            for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
+                if ("Propriétaire".equals(entry.getValue().get("role"))) {
+                    entry.getValue().put("role", "Administrateur");
+                }
+            }
+
+            if (membres.containsKey(nouveauUid)) {
+                membres.get(nouveauUid).put("role", "Propriétaire");
+            }
+
+            groupRef.update("members", membres)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "Nouveau propriétaire défini", Toast.LENGTH_SHORT).show();
+                        requireActivity().getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, new GroupesFragment())
+                                .commit();
+                    });
+        });
+    }
+
     private void promouvoirEnAdmin(String uid) {
         DocumentReference groupRef = FirebaseFirestore.getInstance()
                 .collection("groups")
@@ -163,135 +247,12 @@ public class InfoGroupeFragment extends Fragment {
             groupRef.update("members", membres)
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(getContext(), "Membre promu avec succès", Toast.LENGTH_SHORT).show();
-                        chargerInfosGroupe(); // Refresh visuel
+                        chargerInfosGroupe();
                     })
                     .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la promotion", Toast.LENGTH_SHORT).show());
         });
     }
-    private void ouvrirInterfaceGestionPermissions(Map<String, Map<String, Object>> membres) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Modifier les rôles");
 
-        ScrollView scroll = new ScrollView(requireContext());
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(16, 16, 16, 16);
-        scroll.addView(layout);
-
-        Map<String, String> modifications = new HashMap<>();
-        final String[] nouveauProprietaire = {null};
-
-        for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
-            String uid = entry.getKey();
-            Map<String, Object> infos = entry.getValue();
-            String username = (String) infos.get("userName");
-            String roleActuel = (String) infos.get("role");
-
-            if (uid.equals(currentUserId)) continue; // Ne pas modifier son propre rôle
-
-            TextView label = new TextView(requireContext());
-            label.setText(username + " - Actuel : " + roleActuel);
-            layout.addView(label);
-
-            List<String> choix = new ArrayList<>();
-            if (!"Membre".equals(roleActuel)) choix.add("Membre");
-            if (!"Administrateur".equals(roleActuel)) choix.add("Administrateur");
-            if (!"Propriétaire".equals(roleActuel)) choix.add("Propriétaire");
-
-            Spinner spinner = new Spinner(requireContext());
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, choix);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinner.setAdapter(adapter);
-            spinner.setTag(uid + "|" + roleActuel);
-            layout.addView(spinner);
-        }
-
-        builder.setView(scroll);
-
-        builder.setPositiveButton("Valider", (dialog, which) -> {
-            for (int i = 0; i < layout.getChildCount(); i++) {
-                View v = layout.getChildAt(i);
-                if (v instanceof Spinner) {
-                    Spinner sp = (Spinner) v;
-                    String tag = (String) sp.getTag();
-                    String[] parts = tag.split("\\|");
-                    String uid = parts[0];
-                    String roleActuel = parts[1];
-                    String selection = (String) sp.getSelectedItem();
-
-                    if (!selection.equals(roleActuel)) {
-                        if ("Propriétaire".equals(selection)) {
-                            nouveauProprietaire[0] = uid;
-                        }
-                        modifications.put(uid, selection);
-                    }
-                }
-            }
-
-            if (modifications.isEmpty()) return;
-
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("Confirmation")
-                    .setMessage("Souhaitez-vous vraiment appliquer ces changements de rôle ?")
-                    .setPositiveButton("Oui", (dialog2, which2) -> {
-                        boolean jeMeRetrograde = currentUserId.equals(nouveauProprietaire[0]);
-                        appliquerChangementsDeRoles(modifications, nouveauProprietaire[0], jeMeRetrograde);
-                    })
-                    .setNegativeButton("Annuler", null)
-                    .show();
-        });
-
-        builder.setNegativeButton("Annuler", null);
-        builder.show();
-    }
-    private void appliquerChangementsDeRoles(Map<String, String> changements, @Nullable String nouveauProprietaireId, boolean jeMeRetrograde) {
-        DocumentReference groupRef = FirebaseFirestore.getInstance()
-                .collection("groups")
-                .document(groupId);
-
-        groupRef.get().addOnSuccessListener(snapshot -> {
-            if (!snapshot.exists()) return;
-
-            Map<String, Map<String, Object>> membres = (Map<String, Map<String, Object>>) snapshot.get("members");
-            if (membres == null) return;
-
-            if (nouveauProprietaireId != null) {
-                for (Map.Entry<String, Map<String, Object>> entry : membres.entrySet()) {
-                    String uid = entry.getKey();
-                    String role = (String) entry.getValue().get("role");
-                    if ("Propriétaire".equals(role)) {
-                        membres.get(uid).put("role", "Administrateur");
-                    }
-                }
-                membres.get(nouveauProprietaireId).put("role", "Propriétaire");
-            }
-
-            for (Map.Entry<String, String> entry : changements.entrySet()) {
-                String uid = entry.getKey();
-                String nouveauRole = entry.getValue();
-                if (!"Propriétaire".equals(nouveauRole)) {
-                    membres.get(uid).put("role", nouveauRole);
-                }
-            }
-
-            groupRef.update("members", membres)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "Permissions mises à jour", Toast.LENGTH_SHORT).show();
-
-                        if (jeMeRetrograde) {
-                            // Rechargement complet : le menu de gestion disparaît
-                            requireActivity().getSupportFragmentManager()
-                                    .beginTransaction()
-                                    .replace(R.id.fragment_container, new GroupesFragment()) // ou un refresh plus fin
-                                    .commit();
-                        } else {
-                            // Simple refresh
-                            chargerInfosGroupe();
-                        }
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(getContext(), "Erreur lors de la mise à jour", Toast.LENGTH_SHORT).show());
-        });
-    }
     private void quitterGroupe() {
         FirebaseFirestore.getInstance()
                 .collection("groups")
@@ -322,5 +283,4 @@ public class InfoGroupeFragment extends Fragment {
                             .commit();
                 });
     }
-
 }

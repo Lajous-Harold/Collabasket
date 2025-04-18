@@ -56,7 +56,6 @@ Utilité : Affiche le nom du groupe, les membres avec nom + numéro, et permettr
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:divider="?android:attr/dividerHorizontal"
             android:showDividers="middle"
             android:dividerPadding="8dp" />
 

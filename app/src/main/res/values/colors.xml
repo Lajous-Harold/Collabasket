@@ -13,6 +13,8 @@
     <!-- Texte & fond -->
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
+    <color name="gray">#666666</color>
+    <color name="light_gray">#CCCCCC</color>
     <color name="grayLight">#F5F5F5</color>
     <color name="grayMedium">#CCCCCC</color>
     <color name="grayDark">#888888</color>
