@@ -1,6 +1,7 @@
 package com.example.collabasket;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -34,6 +36,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("DEBUG_STARTUP", "MainActivity onCreate lancé");
+
+        // 🔧 Lecture du thème stocké dans les préférences
+        SharedPreferences prefs = getSharedPreferences("theme_prefs", MODE_PRIVATE);
+        boolean darkMode = prefs.getBoolean("dark_mode", false);
+
+        int currentMode = AppCompatDelegate.getDefaultNightMode();
+        int targetMode = darkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
+
+        if (currentMode != targetMode) {
+            AppCompatDelegate.setDefaultNightMode(targetMode);
+            recreate(); // relancer l'activité avec le bon thème
+            return;     // éviter d'exécuter la suite deux fois
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -106,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
         handleDynamicLink(getIntent());
     }
+
 
     @Override
     protected void onNewIntent(Intent intent) {
