@@ -1,6 +1,7 @@
 package com.example.collabasket.ui.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +42,7 @@ public class CompteFragment extends Fragment {
     private FirebaseFirestore firestore;
     private FirebaseUser user;
     private MaterialSwitch switchTheme;
+    private SharedPreferences prefs;
 
     @Nullable
     @Override
@@ -52,6 +54,7 @@ public class CompteFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         user = mAuth.getCurrentUser();
+        prefs = requireContext().getSharedPreferences("settings", getContext().MODE_PRIVATE);
 
         editNom = view.findViewById(R.id.edit_nom);
         textEmail = view.findViewById(R.id.text_email);
@@ -171,16 +174,14 @@ public class CompteFragment extends Fragment {
             requireActivity().finish();
         });
 
-        // Initialisation du switch en fonction du thème système
-        int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        switchTheme.setChecked(currentNightMode == Configuration.UI_MODE_NIGHT_YES);
+        // Initialisation du switch depuis les préférences (ou fallback sur le thème système)
+        boolean darkMode = prefs.getBoolean("dark_mode",
+                (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES);
+        switchTheme.setChecked(darkMode);
 
         switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            }
+            AppCompatDelegate.setDefaultNightMode(isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+            prefs.edit().putBoolean("dark_mode", isChecked).apply();
         });
 
         return view;
