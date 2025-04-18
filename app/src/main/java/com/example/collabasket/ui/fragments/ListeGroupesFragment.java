@@ -459,24 +459,13 @@ public class ListeGroupesFragment extends Fragment {
                     }
 
                     if (!nom.isEmpty()) {
-                        final float finalQuantite = quantite;
-                        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                        firestore.collection("users")
-                                .document(uid)
-                                .get()
-                                .addOnSuccessListener(doc -> {
-                                    String ajoutePar = doc.contains("username") ? doc.getString("username") : "Inconnu";
-                                    if (ajoutePar == null || ajoutePar.isEmpty()) {
-                                        ajoutePar = "Inconnu";
-                                    }
+                        String ajoutePar = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        ProduitGroupes produit = new ProduitGroupes(nom, categorie, quantite, unite, groupId, ajoutePar);
 
-                                    ProduitGroupes produit = new ProduitGroupes(nom, categorie, finalQuantite, unite, groupId, ajoutePar);
-
-                                    firestore.collection("groups")
-                                            .document(groupId)
-                                            .collection("produits")
-                                            .add(produit);
-                                });
+                        firestore.collection("groups")
+                                .document(groupId)
+                                .collection("produits")
+                                .add(produit);
                     } else {
                         Toast.makeText(getContext(), "Le nom du produit est requis", Toast.LENGTH_SHORT).show();
                     }
@@ -484,6 +473,7 @@ public class ListeGroupesFragment extends Fragment {
                 .setNegativeButton("Annuler", null)
                 .show();
     }
+
     private void chargerProduitsEnTempsReel() {
         firestore.collection("groups")
                 .document(groupId)
