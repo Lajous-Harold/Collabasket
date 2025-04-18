@@ -25,7 +25,7 @@ exports.onProduitAjoute = onDocumentCreated(
 
     const ajoutePar = produit.ajoutePar?.stringValue || "Quelqu’un";
     const nomProduit = produit.nom?.stringValue || "un produit";
-    const userId = produit.userId?.stringValue;
+    const userId = produit.ajoutePar?.stringValue;
 
     const title = "Produit ajouté";
     const body = `${ajoutePar} a ajouté ${nomProduit} dans ${groupName}`;
@@ -64,7 +64,7 @@ exports.onProduitSupprime = onDocumentDeleted(
 
     const supprimePar = produit.ajoutePar?.stringValue || "Quelqu’un";
     const nomProduit = produit.nom?.stringValue || "un produit";
-    const userId = produit.userId?.stringValue;
+    const userId = produit.ajoutePar?.stringValue;
 
     const title = "Produit supprimé";
     const body = `${supprimePar} a supprimé ${nomProduit} de ${groupName}`;
@@ -98,14 +98,14 @@ exports.onProduitCoche = onDocumentUpdated(
 
     if (!before || !after) return;
 
-    if (before.checked?.booleanValue === false && after.checked?.booleanValue === true) {
+    if (before.coche?.booleanValue === false && after.coche?.booleanValue === true) {
       const groupSnap = await db.collection("groups").doc(groupId).get();
       const groupData = groupSnap.data();
       const groupName = groupData?.nom || "un groupe";
 
       const cochePar = after.ajoutePar?.stringValue || "Quelqu’un";
       const nomProduit = after.nom?.stringValue || "un produit";
-      const userId = after.userId?.stringValue;
+      const userId = after.ajoutePar?.stringValue;
 
       const title = "Produit acheté";
       const body = `${cochePar} a coché ${nomProduit} comme acheté dans ${groupName}`;
