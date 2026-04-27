@@ -1,0 +1,66 @@
+import { Tabs } from 'expo-router';
+import { Text } from 'react-native';
+import { useRealtimeLists } from '../../src/hooks/useRealtimeLists';
+import { useRealtimeGroups } from '../../src/hooks/useRealtimeGroups';
+import { useNotifications } from '../../src/hooks/useNotifications';
+
+export default function AppLayout() {
+  // Realtime global — actif tant que l'utilisateur est connecte
+  useRealtimeLists();
+  useRealtimeGroups();
+  // Push notifications — enregistrement token + listeners
+  useNotifications();
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: '#0d9488',
+        tabBarInactiveTintColor: '#9ca3af',
+        tabBarStyle: {
+          borderTopColor: '#f3f4f6',
+        },
+        headerStyle: {
+          backgroundColor: '#ffffff',
+        },
+        headerTitleStyle: {
+          fontWeight: '600',
+          color: '#111827',
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Mes listes',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>📝</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="groups"
+        options={{
+          title: 'Groupes',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>👥</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="lists"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>👤</Text>
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}

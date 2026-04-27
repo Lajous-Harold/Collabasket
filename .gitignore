@@ -1,18 +1,61 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+eas-build-cache/
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# macOS
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-gradle.properties
-app/test.keystore.jks
-functions/firebase-debug.log
+*.pem
+
+# Windows
+Thumbs.db
+
+# editors
+.vscode/
+.idea/
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+
+# test coverage
+coverage/
+
+# generated native folders
+/ios
+/android
+
+# Supabase local
+.supabase/
+supabase/.temp/
+
+# secrets
+*firebase-adminsdk-*.json
