@@ -63,11 +63,11 @@ export async function requestAndRegisterPushToken(userId: string): Promise<strin
   const { error } = await supabase.from('devices').upsert(
     {
       user_id: userId,
-      fcm_token: token.data,
+      push_token: token.data,
       platform,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: 'user_id,fcm_token' }
+    { onConflict: 'user_id,push_token' }
   );
 
   if (error) {

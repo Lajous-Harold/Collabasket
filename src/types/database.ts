@@ -17,6 +17,36 @@ export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 export interface Database {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          color: string | null;
+          owner_user_id: string | null;
+          owner_group_id: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          color?: string | null;
+          owner_user_id?: string | null;
+          owner_group_id?: string | null;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          color?: string | null;
+          owner_user_id?: string | null;
+          owner_group_id?: string | null;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -45,21 +75,21 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          fcm_token: string;
+          push_token: string;
           platform: 'android' | 'ios';
           updated_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          fcm_token: string;
+          push_token: string;
           platform: 'android' | 'ios';
           updated_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          fcm_token?: string;
+          push_token?: string;
           platform?: 'android' | 'ios';
           updated_at?: string;
         };
@@ -157,7 +187,7 @@ export interface Database {
           id: string;
           list_id: string;
           name: string;
-          category: string | null;
+          category_id: string | null;
           unit: string | null;
           quantity: number;
           added_by: string;
@@ -173,7 +203,7 @@ export interface Database {
           id?: string;
           list_id: string;
           name: string;
-          category?: string | null;
+          category_id?: string | null;
           unit?: string | null;
           quantity?: number;
           added_by: string;
@@ -189,7 +219,7 @@ export interface Database {
           id?: string;
           list_id?: string;
           name?: string;
-          category?: string | null;
+          category_id?: string | null;
           unit?: string | null;
           quantity?: number;
           added_by?: string;

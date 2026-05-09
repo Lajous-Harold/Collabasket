@@ -1,24 +1,38 @@
-import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import {
+  signInWithGoogle as nativeSignInWithGoogle,
+  signInWithApple as nativeSignInWithApple,
+} from '../lib/auth';
+
+/**
+ * Hook d'auth.
+ *
+ * Selecteur du store + raccourcis pour les methodes de sign-in.
+ * Aucune subscription Supabase ici : c'est authStore qui la tient en
+ * singleton (cf. authStore.init).
+ *
+ * Methodes exposees :
+ *   - signInWithOtp(email)            -> { error }
+ *   - verifyOtp(email, token)         -> { data, error }
+ *   - signInWithGoogle()              -> { cancelled, error }
+ *   - signInWithApple()               -> { cancelled, error } (stub : error)
+ *   - signOut()                       -> Promise<void>, throw on error
+ *
+ * Le shape { cancelled, error } pour OAuth distingue l'annulation
+ * utilisateur (modale fermee) d'une vraie erreur.
+ */
+
+interface OAuthResult {
+  cancelled: boolean;
+  error: Error | null;
+}
 
 export function useAuth() {
-  const { session, user, isLoading, setSession, setLoading } = useAuthStore();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [setSession, setLoading]);
+  const session = useAuthStore((s) => s.session);
+  const user = useAuthStore((s) => s.user);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const signOut = useAuthStore((s) => s.signOut);
 
   const signInWithOtp = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
@@ -34,9 +48,36 @@ export function useAuth() {
     return { data, error };
   };
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+  const signInWithGoogle = async (): Promise<OAuthResult> => {
+    try {
+      const native = await nativeSignInWithGoogle();
+      if (!native) {
+        return { cancelled: true, error: null };
+      }
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: native.idToken,
+      });
+      return { cancelled: false, error: error as Error | null };
+    } catch (err) {
+      return { cancelled: false, error: err as Error };
+    }
+  };
+
+  const signInWithApple = async (): Promise<OAuthResult> => {
+    try {
+      const native = await nativeSignInWithApple();
+      if (!native) {
+        return { cancelled: true, error: null };
+      }
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: native.idToken,
+      });
+      return { cancelled: false, error: error as Error | null };
+    } catch (err) {
+      return { cancelled: false, error: err as Error };
+    }
   };
 
   return {
@@ -45,6 +86,8 @@ export function useAuth() {
     isLoading,
     signInWithOtp,
     verifyOtp,
+    signInWithGoogle,
+    signInWithApple,
     signOut,
   };
 }

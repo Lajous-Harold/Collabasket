@@ -3,12 +3,28 @@ import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '../src/lib/queryClient';
-import { useAuth } from '../src/hooks/useAuth';
 import { View, ActivityIndicator } from 'react-native';
+import { queryClient } from '../src/lib/queryClient';
+import { useAuthStore } from '../src/stores/authStore';
+
+// Bootstrap auth (getSession + subscription onAuthStateChange) au
+// chargement du module. Idempotent : initPromise dans authStore
+// deduplique les appels concurrents et est cleanup-safe en hot reload.
+//
+// On ne propage pas l'erreur (le UX correct est de presenter l'ecran
+// auth si la session ne peut pas etre chargee, ce qui se produit
+// automatiquement avec session=null).
+useAuthStore.getState().init().catch((err) => {
+  // TODO: Sentry.captureException(err) quand le hook Sentry sera en place
+  console.error('[root] auth init failed:', err);
+});
 
 function RootLayoutNav() {
-  const { session, isLoading } = useAuth();
+  // Selecteurs store directs : on ne consomme que session+isLoading
+  // ici, pas besoin de la couche useAuth qui ajouterait juste de
+  // l'indirection au root layout.
+  const session = useAuthStore((s) => s.session);
+  const isLoading = useAuthStore((s) => s.isLoading);
   const segments = useSegments();
   const router = useRouter();
 
