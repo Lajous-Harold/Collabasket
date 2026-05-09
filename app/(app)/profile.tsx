@@ -23,8 +23,11 @@ export default function ProfileScreen() {
       destructive: true,
     });
     if (!ok) return;
-    const { error } = await signOut();
-    if (error) notifyError(error.message);
+    try {
+      await signOut();
+    } catch (e: any) {
+      notifyError(e?.message ?? 'Erreur lors de la deconnexion.');
+    }
   };
 
   const handleNotifications = async () => {
