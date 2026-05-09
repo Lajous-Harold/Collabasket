@@ -7,7 +7,7 @@ type GroupRow = Database['public']['Tables']['groups']['Row'];
 type MembershipRow = Database['public']['Tables']['memberships']['Row'];
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 
-export type GroupWithRole = GroupRow & { role: MembershipRow['role'] };
+export type GroupWithRole = GroupRow & { role: MembershipRow['role']; membershipId: string };
 
 export type GroupMember = MembershipRow & {
   profile: ProfileRow | null;
@@ -37,7 +37,7 @@ export function useMyGroups() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('memberships')
-        .select('role, group:groups(*)')
+        .select('id, role, group:groups(*)')
         .eq('user_id', user!.id)
         .order('joined_at', { ascending: false });
 
@@ -46,6 +46,7 @@ export function useMyGroups() {
       return (data ?? []).map((m) => ({
         ...(m.group as unknown as GroupRow),
         role: m.role,
+        membershipId: m.id as string,
       })) as GroupWithRole[];
     },
     enabled: !!user,
@@ -58,8 +59,6 @@ export function useCreateGroup() {
 
   return useMutation({
     mutationFn: async ({ name, description }: { name: string; description?: string }) => {
-      // La membership 'owner' est creee automatiquement par le trigger
-      // on_group_created (cf. migration 002_fix_rls_policies.sql)
       const { data: group, error } = await supabase
         .from('groups')
         .insert({
@@ -85,6 +84,23 @@ export function useDeleteGroup() {
   return useMutation({
     mutationFn: async (groupId: string) => {
       const { error } = await supabase.from('groups').delete().eq('id', groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+}
+
+export function useLeaveGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (membershipId: string) => {
+      const { error } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', membershipId);
       if (error) throw error;
     },
     onSuccess: () => {

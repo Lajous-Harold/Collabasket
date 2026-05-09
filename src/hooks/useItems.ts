@@ -34,13 +34,19 @@ export function useAddItem() {
       name,
       quantity,
       unit,
-      category,
+      category_id,
+      storage_location,
+      notes,
+      price,
     }: {
       listId: string;
       name: string;
       quantity?: number;
-      unit?: string;
-      category?: string;
+      unit?: string | null;
+      category_id?: string | null;
+      storage_location?: StorageLocation | null;
+      notes?: string | null;
+      price?: number | null;
     }) => {
       const { data, error } = await supabase
         .from('items')
@@ -49,8 +55,11 @@ export function useAddItem() {
           name,
           quantity: quantity ?? 1,
           unit: unit ?? null,
-          category: category ?? null,
+          category_id: category_id ?? null,
           added_by: user!.id,
+          storage_location: storage_location ?? null,
+          notes: notes ?? null,
+          price: price ?? null,
         })
         .select()
         .single();
@@ -97,7 +106,7 @@ export interface UpdateItemPatch {
   name?: string;
   quantity?: number;
   unit?: string | null;
-  category?: string | null;
+  category_id?: string | null;
   storage_location?: StorageLocation | null;
   notes?: string | null;
   price?: number | null;
@@ -116,7 +125,7 @@ export function useUpdateItem() {
       if (patch.name !== undefined) update.name = patch.name;
       if (patch.quantity !== undefined) update.quantity = patch.quantity;
       if (patch.unit !== undefined) update.unit = patch.unit;
-      if (patch.category !== undefined) update.category = patch.category;
+      if (patch.category_id !== undefined) update.category_id = patch.category_id;
       if (patch.storage_location !== undefined)
         update.storage_location = patch.storage_location;
       if (patch.notes !== undefined) update.notes = patch.notes;
@@ -150,6 +159,24 @@ export function useDeleteItem() {
       queryClient.invalidateQueries({
         queryKey: ['items', variables.listId],
       });
+    },
+  });
+}
+
+export function useClearCheckedItems() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ listId }: { listId: string }) => {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('list_id', listId)
+        .eq('is_checked', true);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['items', variables.listId] });
     },
   });
 }

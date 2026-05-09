@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMyGroups, useCreateGroup, useDeleteGroup } from '../../../src/hooks/useGroups';
+import { useMyGroups, useCreateGroup, useDeleteGroup, useLeaveGroup } from '../../../src/hooks/useGroups';
 import { Button } from '../../../src/components/ui/Button';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
@@ -19,6 +19,7 @@ export default function GroupsScreen() {
   const { data: groups, isLoading } = useMyGroups();
   const createGroup = useCreateGroup();
   const deleteGroup = useDeleteGroup();
+  const leaveGroup = useLeaveGroup();
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
@@ -47,6 +48,21 @@ export default function GroupsScreen() {
     if (!ok) return;
     try {
       await deleteGroup.mutateAsync(groupId);
+    } catch (e: any) {
+      notifyError(e.message);
+    }
+  };
+
+  const handleLeave = async (membershipId: string, groupName: string) => {
+    const ok = await confirm({
+      title: 'Quitter le groupe',
+      message: `Quitter "${groupName}" ?`,
+      confirmLabel: 'Quitter',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await leaveGroup.mutateAsync(membershipId);
     } catch (e: any) {
       notifyError(e.message);
     }
@@ -88,12 +104,19 @@ export default function GroupsScreen() {
                       {ROLE_LABELS[item.role] ?? item.role}
                     </Text>
                   </View>
-                  {item.role === 'owner' && (
+                  {item.role === 'owner' ? (
                     <Button
                       title="Suppr."
                       variant="danger"
                       size="sm"
                       onPress={() => handleDelete(item.id, item.name)}
+                    />
+                  ) : (
+                    <Button
+                      title="Quitter"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => handleLeave(item.membershipId, item.name)}
                     />
                   )}
                 </View>

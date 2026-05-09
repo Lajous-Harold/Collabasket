@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Button } from './Button';
 import { Input } from './Input';
+import { CategoryPicker } from './CategoryPicker';
+import type { CategoryRow } from '../../hooks/useCategories';
 
 export type StorageLocation = 'pantry' | 'fridge' | 'freezer' | null;
 
@@ -17,7 +19,7 @@ export interface ItemFormValues {
   name: string;
   quantity: number;
   unit: string;
-  category: string;
+  category_id: string | null;
   storage_location: StorageLocation;
   notes: string;
   price: number | null;
@@ -25,7 +27,6 @@ export interface ItemFormValues {
 
 export interface ItemSuggestion {
   name: string;
-  category?: string;
   unit?: string;
   default_quantity?: number;
 }
@@ -34,9 +35,12 @@ interface Props {
   visible: boolean;
   title: string;
   initialValues?: Partial<ItemFormValues>;
+  categories?: CategoryRow[];
+  onCreateCategory?: (name: string) => Promise<CategoryRow>;
   loading?: boolean;
   onSubmit: (values: ItemFormValues) => void;
   onCancel: () => void;
+  onDelete?: () => void;
   suggestions?: ItemSuggestion[];
 }
 
@@ -44,7 +48,7 @@ const DEFAULT_VALUES: ItemFormValues = {
   name: '',
   quantity: 1,
   unit: '',
-  category: '',
+  category_id: null,
   storage_location: null,
   notes: '',
   price: null,
@@ -108,19 +112,24 @@ export function ItemFormModal({
   visible,
   title,
   initialValues,
+  categories = [],
+  onCreateCategory,
   loading = false,
   onSubmit,
   onCancel,
+  onDelete,
   suggestions = [],
 }: Props) {
   const [name, setName] = useState<string>('');
   const [quantityText, setQuantityText] = useState<string>('1');
   const [unit, setUnit] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [storageLocation, setStorageLocation] = useState<StorageLocation>(null);
   const [notes, setNotes] = useState<string>('');
   const [priceText, setPriceText] = useState<string>('');
   const [nameError, setNameError] = useState<string | undefined>(undefined);
+  const [quantityError, setQuantityError] = useState<string | undefined>(undefined);
+  const [priceError, setPriceError] = useState<string | undefined>(undefined);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   useEffect(() => {
@@ -129,11 +138,13 @@ export function ItemFormModal({
       setName(merged.name);
       setQuantityText(numberToText(merged.quantity));
       setUnit(merged.unit);
-      setCategory(merged.category);
+      setCategoryId(merged.category_id);
       setStorageLocation(merged.storage_location);
       setNotes(merged.notes);
       setPriceText(optionalNumberToText(merged.price));
       setNameError(undefined);
+      setQuantityError(undefined);
+      setPriceError(undefined);
       setShowSuggestions(false);
     }
   }, [visible, initialValues]);
@@ -148,7 +159,6 @@ export function ItemFormModal({
 
   const handleSelectSuggestion = (suggestion: ItemSuggestion) => {
     setName(suggestion.name);
-    if (suggestion.category !== undefined) setCategory(suggestion.category);
     if (suggestion.unit !== undefined) setUnit(suggestion.unit);
     if (suggestion.default_quantity !== undefined) {
       setQuantityText(numberToText(suggestion.default_quantity));
@@ -169,15 +179,27 @@ export function ItemFormModal({
       return;
     }
 
-    const quantity = parseNumber(quantityText);
-    const safeQuantity = quantity > 0 ? quantity : 1;
-    const price = parseOptionalNumber(priceText);
+    const parsedQuantity = Number.parseFloat(quantityText.replace(',', '.'));
+    if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+      setQuantityError('Quantité invalide');
+      return;
+    }
+
+    let price: number | null = null;
+    if (priceText.trim().length > 0) {
+      const parsedPrice = Number.parseFloat(priceText.replace(',', '.'));
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+        setPriceError('Prix invalide');
+        return;
+      }
+      price = Math.round(parsedPrice * 100) / 100;
+    }
 
     const values: ItemFormValues = {
       name: trimmedName,
-      quantity: safeQuantity,
+      quantity: parsedQuantity,
       unit: unit.trim(),
-      category: category.trim(),
+      category_id: categoryId,
       storage_location: storageLocation,
       notes: notes.trim(),
       price,
@@ -225,13 +247,11 @@ export function ItemFormModal({
                       <Text className="text-sm font-medium text-gray-800">
                         {suggestion.name}
                       </Text>
-                      {(suggestion.category || suggestion.unit) && (
+                      {suggestion.unit ? (
                         <Text className="text-xs text-gray-500 mt-0.5">
-                          {[suggestion.category, suggestion.unit]
-                            .filter(Boolean)
-                            .join(' - ')}
+                          {suggestion.unit}
                         </Text>
-                      )}
+                      ) : null}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -245,9 +265,13 @@ export function ItemFormModal({
                   label="Quantite"
                   placeholder="1"
                   value={quantityText}
-                  onChangeText={setQuantityText}
+                  onChangeText={(t) => {
+                    setQuantityText(t);
+                    if (quantityError) setQuantityError(undefined);
+                  }}
                   keyboardType="decimal-pad"
                   returnKeyType="next"
+                  error={quantityError}
                 />
               </View>
               <View className="flex-1">
@@ -261,15 +285,24 @@ export function ItemFormModal({
               </View>
             </View>
 
-            {/* Categorie */}
+            {/* Catégorie */}
             <View className="mt-4">
-              <Input
-                label="Categorie"
-                placeholder="Fruits, Boulangerie..."
-                value={category}
-                onChangeText={setCategory}
-                returnKeyType="next"
-              />
+              {onCreateCategory ? (
+                <CategoryPicker
+                  label="Catégorie"
+                  selectedId={categoryId}
+                  categories={categories}
+                  onSelect={setCategoryId}
+                  onCreateCategory={onCreateCategory}
+                  disabled={loading}
+                />
+              ) : (
+                <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl opacity-50">
+                  <Text className="text-base text-gray-400">
+                    {categories.find((c) => c.id === categoryId)?.name ?? 'Sans catégorie'}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Storage location */}
@@ -316,30 +349,44 @@ export function ItemFormModal({
                 label="Prix unitaire (optionnel)"
                 placeholder="0.00"
                 value={priceText}
-                onChangeText={setPriceText}
+                onChangeText={(t) => {
+                  setPriceText(t);
+                  if (priceError) setPriceError(undefined);
+                }}
                 keyboardType="decimal-pad"
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
+                error={priceError}
               />
             </View>
           </ScrollView>
 
           {/* Boutons en bas */}
-          <View className="px-6 py-4 border-t border-gray-100 flex-row gap-3">
-            <View className="flex-1">
+          <View className="px-6 py-4 border-t border-gray-100 gap-3">
+            {onDelete && (
               <Button
-                title="Annuler"
-                variant="outline"
-                onPress={onCancel}
+                title="Supprimer l'article"
+                variant="danger"
+                onPress={onDelete}
                 disabled={loading}
               />
-            </View>
-            <View className="flex-1">
-              <Button
-                title="Enregistrer"
-                onPress={handleSubmit}
-                loading={loading}
-              />
+            )}
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Button
+                  title="Annuler"
+                  variant="outline"
+                  onPress={onCancel}
+                  disabled={loading}
+                />
+              </View>
+              <View className="flex-1">
+                <Button
+                  title="Enregistrer"
+                  onPress={handleSubmit}
+                  loading={loading}
+                />
+              </View>
             </View>
           </View>
         </View>

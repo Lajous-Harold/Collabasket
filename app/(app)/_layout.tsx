@@ -1,10 +1,11 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Text } from 'react-native';
 import { useRealtimeLists } from '../../src/hooks/useRealtimeLists';
 import { useRealtimeGroups } from '../../src/hooks/useRealtimeGroups';
 import { useNotifications } from '../../src/hooks/useNotifications';
 
 export default function AppLayout() {
+  const router = useRouter();
   // Realtime global — actif tant que l'utilisateur est connecte
   useRealtimeLists();
   useRealtimeGroups();
@@ -36,6 +37,12 @@ export default function AppLayout() {
             <Text style={{ fontSize: 20, color }}>📝</Text>
           ),
         }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.navigate('/(app)/');
+          },
+        }}
       />
       <Tabs.Screen
         name="groups"
@@ -44,6 +51,12 @@ export default function AppLayout() {
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 20, color }}>👥</Text>
           ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+            router.navigate('/(app)/groups');
+          },
         }}
       />
       <Tabs.Screen

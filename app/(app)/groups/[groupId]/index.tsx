@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { notifyError } from '../../../../src/utils/confirm';
+import { confirm, notifyError } from '../../../../src/utils/confirm';
 import {
   useGroupMembers,
+  useDeleteGroup,
+  useLeaveGroup,
   type GroupMember,
 } from '../../../../src/hooks/useGroups';
 import {
@@ -30,13 +32,16 @@ export default function GroupDetailScreen() {
   const { data: lists, isLoading: listsLoading } = useGroupLists(groupId);
   const { data: members } = useGroupMembers(groupId);
   const createList = useCreateGroupList();
+  const deleteGroup = useDeleteGroup();
+  const leaveGroup = useLeaveGroup();
   const { shareInvitation, isPending: isSharing } = useShareInvitation();
   const { hasNewChanges } = useListViews();
   const updateNickname = useUpdateNickname();
   const currentUser = useAuthStore((s) => s.user);
   const router = useRouter();
 
-  const myRole = members?.find((m) => m.user_id === currentUser?.id)?.role;
+  const myMembership = members?.find((m) => m.user_id === currentUser?.id);
+  const myRole = myMembership?.role;
   const isAdminOrOwner = myRole === 'owner' || myRole === 'admin';
 
   const [showModal, setShowModal] = useState(false);
@@ -51,6 +56,39 @@ export default function GroupDetailScreen() {
       await createList.mutateAsync({ name, groupId });
       setNewListName('');
       setShowModal(false);
+    } catch (e: any) {
+      notifyError(e.message);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    const ok = await confirm({
+      title: 'Supprimer le groupe',
+      message: `Supprimer "${groupName}" et toutes ses listes ?`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteGroup.mutateAsync(groupId);
+      router.back();
+    } catch (e: any) {
+      notifyError(e.message);
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!myMembership) return;
+    const ok = await confirm({
+      title: 'Quitter le groupe',
+      message: `Quitter "${groupName}" ?`,
+      confirmLabel: 'Quitter',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await leaveGroup.mutateAsync(myMembership.id);
+      router.back();
     } catch (e: any) {
       notifyError(e.message);
     }
@@ -138,21 +176,21 @@ export default function GroupDetailScreen() {
         </View>
 
         {/* Listes du groupe */}
-        {listsLoading ? (
-          <LoadingState />
-        ) : !lists?.length ? (
-          <EmptyState
-            icon="📋"
-            title="Aucune liste"
-            subtitle="Ajoutez une liste partagée pour ce groupe."
-          >
-            <Button
-              title="+ Nouvelle liste"
-              onPress={() => setShowModal(true)}
-            />
-          </EmptyState>
-        ) : (
-          <>
+        <View className="flex-1">
+          {listsLoading ? (
+            <LoadingState />
+          ) : !lists?.length ? (
+            <EmptyState
+              icon="📋"
+              title="Aucune liste"
+              subtitle="Ajoutez une liste partagée pour ce groupe."
+            >
+              <Button
+                title="+ Nouvelle liste"
+                onPress={() => setShowModal(true)}
+              />
+            </EmptyState>
+          ) : (
             <FlatList
               data={lists}
               keyExtractor={(item) => item.id}
@@ -189,15 +227,38 @@ export default function GroupDetailScreen() {
                   </View>
                 </Card>
               )}
+              ListFooterComponent={
+                <View className="pt-2 pb-2">
+                  <Button
+                    title="+ Nouvelle liste"
+                    onPress={() => setShowModal(true)}
+                  />
+                </View>
+              }
             />
-            <View className="px-4 pb-6">
-              <Button
-                title="+ Nouvelle liste"
-                onPress={() => setShowModal(true)}
-              />
-            </View>
-          </>
-        )}
+          )}
+        </View>
+
+        {/* Actions groupe */}
+        <View className="px-4 pb-6 pt-3 border-t border-gray-100">
+          {myRole === 'owner' ? (
+            <Button
+              title="Supprimer le groupe"
+              variant="danger"
+              size="sm"
+              loading={deleteGroup.isPending}
+              onPress={handleDeleteGroup}
+            />
+          ) : myRole ? (
+            <Button
+              title="Quitter le groupe"
+              variant="danger"
+              size="sm"
+              loading={leaveGroup.isPending}
+              onPress={handleLeaveGroup}
+            />
+          ) : null}
+        </View>
       </View>
 
       <FormModal
