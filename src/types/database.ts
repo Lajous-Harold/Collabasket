@@ -269,6 +269,90 @@ export interface Database {
         };
         Relationships: [];
       };
+      expenses: {
+        Row: {
+          id: string;
+          group_id: string;
+          paid_by: string;
+          title: string;
+          amount: number;
+          expense_date: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          paid_by: string;
+          title: string;
+          amount: number;
+          expense_date?: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          paid_by?: string;
+          title?: string;
+          amount?: number;
+          expense_date?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      expense_shares: {
+        Row: {
+          expense_id: string;
+          user_id: string;
+          amount: number;
+        };
+        Insert: {
+          expense_id: string;
+          user_id: string;
+          amount: number;
+        };
+        Update: {
+          expense_id?: string;
+          user_id?: string;
+          amount?: number;
+        };
+        Relationships: [];
+      };
+      settlements: {
+        Row: {
+          id: string;
+          group_id: string;
+          from_user: string;
+          to_user: string;
+          amount: number;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          from_user: string;
+          to_user: string;
+          amount: number;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          from_user?: string;
+          to_user?: string;
+          amount?: number;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       invitations: {
         Row: {
           id: string;
@@ -324,6 +408,28 @@ export interface Database {
       update_my_nickname: {
         Args: { p_group_id: string; p_nickname: string };
         Returns: Database['public']['Tables']['memberships']['Row'];
+      };
+      create_expense: {
+        Args: {
+          p_group_id: string;
+          p_title: string;
+          p_amount: number;
+          p_paid_by: string;
+          p_expense_date: string | null;
+          p_shares: Json;
+        };
+        Returns: string;
+      };
+      update_expense: {
+        Args: {
+          p_expense_id: string;
+          p_title: string;
+          p_amount: number;
+          p_paid_by: string;
+          p_expense_date: string | null;
+          p_shares: Json;
+        };
+        Returns: undefined;
       };
     };
     Enums: {

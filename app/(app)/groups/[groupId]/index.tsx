@@ -172,6 +172,17 @@ export default function GroupDetailScreen() {
                 }
               />
             )}
+            <Button
+              title="💶 Dépenses"
+              variant="outline"
+              size="sm"
+              onPress={() =>
+                router.push({
+                  pathname: '/(app)/groups/[groupId]/expenses',
+                  params: { groupId },
+                })
+              }
+            />
           </View>
         </View>
 
