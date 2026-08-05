@@ -71,12 +71,12 @@ export function CategoryPicker({
     <>
       <View>
         {label ? (
-          <Text className="text-sm font-medium text-gray-700 mb-1">{label}</Text>
+          <Text className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{label}</Text>
         ) : null}
         <TouchableOpacity
           onPress={() => setOpen(true)}
           disabled={disabled}
-          className={`flex-row items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl ${
+          className={`flex-row items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl ${
             disabled ? 'opacity-50' : ''
           }`}
           activeOpacity={0.7}
@@ -90,7 +90,7 @@ export function CategoryPicker({
             ) : null}
             <Text
               className={
-                selectedId ? 'text-base text-gray-800' : 'text-base text-gray-400'
+                selectedId ? 'text-base text-gray-800 dark:text-gray-100' : 'text-base text-gray-400'
               }
             >
               {selectedCategory?.name ?? 'Sans catégorie'}
@@ -110,9 +110,9 @@ export function CategoryPicker({
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           className="flex-1 justify-end bg-black/40"
         >
-          <View className="bg-white rounded-t-2xl max-h-[70%]">
-            <View className="px-6 pt-5 pb-3 border-b border-gray-100 flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-gray-800">
+          <View className="bg-white dark:bg-gray-900 rounded-t-2xl max-h-[70%]">
+            <View className="px-6 pt-5 pb-3 border-b border-gray-100 dark:border-gray-800 flex-row items-center justify-between">
+              <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100">
                 Catégorie
               </Text>
               <TouchableOpacity onPress={() => setOpen(false)} className="p-1">
@@ -130,11 +130,11 @@ export function CategoryPicker({
                 className="flex-row items-center justify-between px-6 py-3.5 border-b border-gray-50"
                 activeOpacity={0.6}
               >
-                <Text className="text-base text-gray-500 italic">
+                <Text className="text-base text-gray-500 dark:text-gray-400 italic">
                   Sans catégorie
                 </Text>
                 {selectedId === null && (
-                  <Text className="text-primary-600 font-bold">✓</Text>
+                  <Text className="text-primary-600 dark:text-primary-400 font-bold">✓</Text>
                 )}
               </TouchableOpacity>
 
@@ -153,12 +153,12 @@ export function CategoryPicker({
                         className="w-3 h-3 rounded-full"
                       />
                     ) : (
-                      <View className="w-3 h-3 rounded-full bg-gray-200" />
+                      <View className="w-3 h-3 rounded-full bg-gray-200 dark:bg-gray-700" />
                     )}
-                    <Text className="text-base text-gray-800">{cat.name}</Text>
+                    <Text className="text-base text-gray-800 dark:text-gray-100">{cat.name}</Text>
                   </View>
                   {selectedId === cat.id && (
-                    <Text className="text-primary-600 font-bold">✓</Text>
+                    <Text className="text-primary-600 dark:text-primary-400 font-bold">✓</Text>
                   )}
                 </TouchableOpacity>
               ))}

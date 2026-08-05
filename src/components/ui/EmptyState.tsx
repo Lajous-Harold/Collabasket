@@ -12,7 +12,7 @@ export function EmptyState({ icon, title, subtitle, children }: Props) {
   return (
     <View className="flex-1 items-center justify-center px-8">
       <Text className="text-6xl mb-4">{icon}</Text>
-      <Text className="text-xl font-semibold text-gray-700 text-center">
+      <Text className="text-xl font-semibold text-gray-700 dark:text-gray-200 text-center">
         {title}
       </Text>
       {subtitle && (

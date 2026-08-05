@@ -156,9 +156,9 @@ export function ExpenseFormModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center items-center bg-black/50"
       >
-        <View className="bg-white w-full h-full md:h-auto md:max-h-[90%] md:max-w-[500px] md:rounded-2xl md:my-8 overflow-hidden">
-          <View className="px-6 pt-6 pb-4 border-b border-gray-100">
-            <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+        <View className="bg-white dark:bg-gray-900 w-full h-full md:h-auto md:max-h-[90%] md:max-w-[500px] md:rounded-2xl md:my-8 overflow-hidden">
+          <View className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title}</Text>
           </View>
 
           <ScrollView
@@ -209,7 +209,7 @@ export function ExpenseFormModal({
               </View>
             </View>
 
-            <Text className="text-sm font-medium text-gray-700 mt-4 mb-2">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-2">
               Payé par
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -222,12 +222,12 @@ export function ExpenseFormModal({
                     className={`rounded-full px-3 py-1.5 border ${
                       selected
                         ? 'bg-primary-600 border-primary-600'
-                        : 'bg-white border-gray-300'
+                        : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     <Text
                       className={`text-sm ${
-                        selected ? 'text-white font-medium' : 'text-gray-700'
+                        selected ? 'text-white font-medium' : 'text-gray-700 dark:text-gray-200'
                       }`}
                     >
                       {member.display_name}
@@ -238,7 +238,7 @@ export function ExpenseFormModal({
               })}
             </View>
 
-            <Text className="text-sm font-medium text-gray-700 mt-4 mb-2">
+            <Text className="text-sm font-medium text-gray-700 dark:text-gray-200 mt-4 mb-2">
               Pour qui ? *
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -250,14 +250,14 @@ export function ExpenseFormModal({
                     onPress={() => toggleParticipant(member.user_id)}
                     className={`rounded-full px-3 py-1.5 border ${
                       selected
-                        ? 'bg-primary-50 border-primary-600'
-                        : 'bg-white border-gray-300'
+                        ? 'bg-primary-50 dark:bg-primary-950 border-primary-600'
+                        : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     <Text
                       className={`text-sm ${
                         selected
-                          ? 'text-primary-700 font-medium'
+                          ? 'text-primary-700 dark:text-primary-300 font-medium'
                           : 'text-gray-400'
                       }`}
                     >
@@ -275,8 +275,8 @@ export function ExpenseFormModal({
             )}
 
             {perPerson !== null && perPerson !== undefined && (
-              <View className="bg-gray-50 rounded-xl px-4 py-3 mt-4">
-                <Text className="text-sm text-gray-600">
+              <View className="bg-gray-50 dark:bg-gray-950 rounded-xl px-4 py-3 mt-4">
+                <Text className="text-sm text-gray-600 dark:text-gray-300">
                   Réparti équitablement : environ {formatAmount(perPerson)} par
                   personne ({participantCount} participant
                   {participantCount > 1 ? 's' : ''})
@@ -285,7 +285,7 @@ export function ExpenseFormModal({
             )}
           </ScrollView>
 
-          <View className="px-6 py-4 border-t border-gray-100 flex-row gap-3">
+          <View className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 flex-row gap-3">
             <View className="flex-1">
               <Button title="Annuler" variant="outline" onPress={onCancel} />
             </View>

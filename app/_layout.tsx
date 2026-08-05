@@ -11,6 +11,7 @@ import {
 } from '../src/lib/queryClient';
 import { setupOnlineManager } from '../src/lib/offline';
 import { setupItemMutationDefaults } from '../src/lib/itemMutations';
+import { initTheme } from '../src/lib/theme';
 import { useAuthStore } from '../src/stores/authStore';
 import { consumePendingInviteToken } from '../src/stores/pendingInvite';
 
@@ -19,6 +20,8 @@ import { consumePendingInviteToken } from '../src/stores/pendingInvite';
 // restauration du cache persisté.
 setupOnlineManager();
 setupItemMutationDefaults(queryClient);
+// Thème clair/sombre : applique la préférence persistée au démarrage
+initTheme();
 
 // Bootstrap auth (getSession + subscription onAuthStateChange) au
 // chargement du module. Idempotent : initPromise dans authStore
@@ -66,7 +69,7 @@ function RootLayoutNav() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-gray-900">
         <ActivityIndicator size="large" color="#0d9488" />
       </View>
     );

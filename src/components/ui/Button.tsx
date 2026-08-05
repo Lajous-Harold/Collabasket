@@ -11,7 +11,7 @@ const variantTextStyles = {
   primary: 'text-white',
   secondary: 'text-white',
   danger: 'text-white',
-  outline: 'text-primary-600',
+  outline: 'text-primary-600 dark:text-primary-400',
 } as const;
 
 const sizeStyles = {

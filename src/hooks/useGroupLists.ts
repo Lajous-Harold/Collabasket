@@ -23,6 +23,53 @@ export function useGroupLists(groupId: string) {
   });
 }
 
+export function useRenameGroupList() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      listId,
+      name,
+    }: {
+      listId: string;
+      name: string;
+      groupId: string;
+    }) => {
+      const { error } = await supabase
+        .from('lists')
+        .update({ name })
+        .eq('id', listId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['lists', 'group', variables.groupId],
+      });
+    },
+  });
+}
+
+export function useDeleteGroupList() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      listId,
+    }: {
+      listId: string;
+      groupId: string;
+    }) => {
+      const { error } = await supabase.from('lists').delete().eq('id', listId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['lists', 'group', variables.groupId],
+      });
+    },
+  });
+}
+
 export function useCreateGroupList() {
   const queryClient = useQueryClient();
 

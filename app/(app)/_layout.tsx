@@ -4,9 +4,11 @@ import { useRealtimeLists } from '../../src/hooks/useRealtimeLists';
 import { useRealtimeGroups } from '../../src/hooks/useRealtimeGroups';
 import { useNotifications } from '../../src/hooks/useNotifications';
 import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
+import { useNavColors } from '../../src/lib/theme';
 
 export default function AppLayout() {
   const router = useRouter();
+  const nav = useNavColors();
   // Realtime global — actif tant que l'utilisateur est connecte
   useRealtimeLists();
   useRealtimeGroups();
@@ -18,17 +20,18 @@ export default function AppLayout() {
       <OfflineBanner />
       <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0d9488',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: nav.tint,
+        tabBarInactiveTintColor: nav.inactive,
         tabBarStyle: {
-          borderTopColor: '#f3f4f6',
+          backgroundColor: nav.background,
+          borderTopColor: nav.border,
         },
         headerStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: nav.background,
         },
         headerTitleStyle: {
           fontWeight: '600',
-          color: '#111827',
+          color: nav.text,
         },
       }}
     >

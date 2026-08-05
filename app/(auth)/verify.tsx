@@ -73,17 +73,17 @@ export default function VerifyScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      className="flex-1 bg-white dark:bg-gray-900"
     >
       <View className="flex-1 justify-center px-8">
         <View className="items-center mb-10">
-          <Text className="text-2xl font-bold text-gray-900">
+          <Text className="text-2xl font-bold text-gray-900 dark:text-gray-50">
             Vérification
           </Text>
-          <Text className="text-sm text-gray-500 mt-2 text-center">
+          <Text className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
             Entrez le code à {OTP_LENGTH} chiffres envoyé à
           </Text>
-          <Text className="text-sm font-semibold text-primary-600 mt-1">
+          <Text className="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-1">
             {email}
           </Text>
         </View>
@@ -95,7 +95,7 @@ export default function VerifyScreen() {
               ref={(ref) => {
                 inputRefs.current[index] = ref;
               }}
-              className="w-10 h-12 border-2 border-gray-300 rounded-lg text-center text-xl font-bold text-gray-900 bg-gray-50 focus:border-primary-500"
+              className="w-10 h-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg text-center text-xl font-bold text-gray-900 dark:text-gray-50 bg-gray-50 dark:bg-gray-950 focus:border-primary-500"
               maxLength={1}
               keyboardType="number-pad"
               value={digit}

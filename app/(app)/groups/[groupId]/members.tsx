@@ -12,6 +12,7 @@ import { Button } from '../../../../src/components/ui/Button';
 import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import type { MembershipRole } from '../../../../src/types/database';
+import { useNavColors } from '../../../../src/lib/theme';
 
 interface MemberItemProps {
   member: GroupMember;
@@ -25,11 +26,11 @@ interface MemberItemProps {
 function roleBadge(role: MembershipRole): { label: string; bg: string; text: string } {
   switch (role) {
     case 'owner':
-      return { label: 'Propriétaire', bg: 'bg-primary-100', text: 'text-primary-700' };
+      return { label: 'Propriétaire', bg: 'bg-primary-100 dark:bg-primary-900', text: 'text-primary-700 dark:text-primary-300' };
     case 'admin':
       return { label: 'Admin', bg: 'bg-amber-100', text: 'text-amber-700' };
     case 'member':
-      return { label: 'Membre', bg: 'bg-gray-100', text: 'text-gray-600' };
+      return { label: 'Membre', bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-300' };
   }
 }
 
@@ -47,10 +48,10 @@ function MemberItem({
   const badge = roleBadge(member.role);
 
   return (
-    <View className="bg-white rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between">
+    <View className="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between">
       <View className="flex-1 flex-row items-center gap-3">
         <View className="flex-1">
-          <Text className="text-sm font-semibold text-gray-800">
+          <Text className="text-sm font-semibold text-gray-800 dark:text-gray-100">
             {member.display_name}
             {isMe ? ' (vous)' : ''}
           </Text>
@@ -95,6 +96,7 @@ function MemberItem({
 }
 
 export default function MembersScreen() {
+  const nav = useNavColors();
   const { groupId, groupName } = useLocalSearchParams<{
     groupId: string;
     groupName: string;
@@ -145,11 +147,13 @@ export default function MembersScreen() {
         options={{
           headerShown: true,
           title: 'Membres',
-          headerTintColor: '#0d9488',
+          headerTintColor: nav.tint,
+          headerStyle: { backgroundColor: nav.background },
+          headerTitleStyle: { color: nav.text },
         }}
       />
 
-      <View className="flex-1 bg-gray-50 pt-4">
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950 pt-4">
         {isLoading ? (
           <LoadingState />
         ) : !members?.length ? (

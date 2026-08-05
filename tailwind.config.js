@@ -1,5 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Contrôle manuel du thème via colorScheme.set() (src/lib/theme.ts) :
+  // 'class' est requis par NativeWind pour pouvoir forcer clair/sombre
+  // indépendamment du réglage système.
+  darkMode: 'class',
   content: ['./app/**/*.{ts,tsx}', './src/**/*.{ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {

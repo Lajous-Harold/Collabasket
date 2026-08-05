@@ -30,11 +30,11 @@ export function ConfirmModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center items-center bg-black/40 px-8"
       >
-        <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-2">
+        <View className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm">
+          <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
             {title}
           </Text>
-          <Text className="text-sm text-gray-600 mb-6 leading-5">
+          <Text className="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-5">
             {message}
           </Text>
           <View className="flex-row gap-3">

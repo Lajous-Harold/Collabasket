@@ -35,10 +35,12 @@ import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import { Button } from '../../../../src/components/ui/Button';
 import { confirm, notifyError } from '../../../../src/utils/confirm';
+import { useNavColors } from '../../../../src/lib/theme';
 
 type TabKey = 'expenses' | 'balances';
 
 export default function GroupExpensesScreen() {
+  const nav = useNavColors();
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const currentUser = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
@@ -210,21 +212,21 @@ export default function GroupExpensesScreen() {
     <TouchableOpacity
       onPress={() => setModal({ kind: 'edit', expense: item })}
       onLongPress={() => handleDelete(item)}
-      className="bg-white rounded-xl px-4 py-3 mb-2 mx-4"
+      className="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 mb-2 mx-4"
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-1 mr-3">
-          <Text className="text-sm font-semibold text-gray-800" numberOfLines={1}>
+          <Text className="text-sm font-semibold text-gray-800 dark:text-gray-100" numberOfLines={1}>
             {item.title}
           </Text>
-          <Text className="text-xs text-gray-500 mt-0.5">
+          <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             Payé par {nameOf(item.paid_by)} ·{' '}
             {item.expense_shares.length} participant
             {item.expense_shares.length > 1 ? 's' : ''}
           </Text>
         </View>
         <View className="items-end">
-          <Text className="text-base font-bold text-gray-900">
+          <Text className="text-base font-bold text-gray-900 dark:text-gray-50">
             {formatAmount(item.amount)}
           </Text>
           <Text className="text-xs text-gray-400 mt-0.5">
@@ -241,11 +243,13 @@ export default function GroupExpensesScreen() {
         options={{
           headerShown: true,
           title: 'Dépenses',
-          headerTintColor: '#0d9488',
+          headerTintColor: nav.tint,
+          headerStyle: { backgroundColor: nav.background },
+          headerTitleStyle: { color: nav.text },
         }}
       />
 
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950">
         {/* Total + onglets */}
         <View className="px-4 pt-4">
           <View className="bg-primary-600 rounded-2xl px-5 py-4 mb-4">
@@ -257,7 +261,7 @@ export default function GroupExpensesScreen() {
             </Text>
           </View>
 
-          <View className="flex-row bg-gray-200 rounded-xl p-1 mb-3">
+          <View className="flex-row bg-gray-200 dark:bg-gray-700 rounded-xl p-1 mb-3">
             {(
               [
                 ['expenses', 'Dépenses'],
@@ -268,12 +272,12 @@ export default function GroupExpensesScreen() {
                 key={key}
                 onPress={() => setTab(key)}
                 className={`flex-1 py-2 rounded-lg ${
-                  tab === key ? 'bg-white' : ''
+                  tab === key ? 'bg-white dark:bg-gray-900' : ''
                 }`}
               >
                 <Text
                   className={`text-center text-sm font-medium ${
-                    tab === key ? 'text-primary-700' : 'text-gray-500'
+                    tab === key ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {label}
@@ -327,8 +331,8 @@ export default function GroupExpensesScreen() {
               </Text>
             }
             renderItem={({ item }) => (
-              <View className="bg-white rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between">
-                <Text className="text-sm font-medium text-gray-800">
+              <View className="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between">
+                <Text className="text-sm font-medium text-gray-800 dark:text-gray-100">
                   {nameOf(item.userId)}
                   {item.userId === currentUser?.id ? ' (vous)' : ''}
                 </Text>
@@ -363,9 +367,9 @@ export default function GroupExpensesScreen() {
                     {suggestions.map((s, index) => (
                       <View
                         key={`${s.from}-${s.to}-${index}`}
-                        className="bg-white rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between"
+                        className="bg-white dark:bg-gray-900 rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between"
                       >
-                        <Text className="text-sm text-gray-700 flex-1 mr-2">
+                        <Text className="text-sm text-gray-700 dark:text-gray-200 flex-1 mr-2">
                           {nameOf(s.from)} doit{' '}
                           <Text className="font-bold">
                             {formatAmount(s.amount)}
@@ -392,9 +396,9 @@ export default function GroupExpensesScreen() {
                       <TouchableOpacity
                         key={settlement.id}
                         onLongPress={() => handleDeleteSettlement(settlement.id)}
-                        className="bg-white/70 rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between"
+                        className="bg-white/70 dark:bg-gray-900/70 rounded-xl px-4 py-3 mb-2 mx-4 flex-row items-center justify-between"
                       >
-                        <Text className="text-sm text-gray-500 flex-1 mr-2">
+                        <Text className="text-sm text-gray-500 dark:text-gray-400 flex-1 mr-2">
                           {nameOf(settlement.from_user)} a remboursé{' '}
                           {formatAmount(settlement.amount)} à{' '}
                           {nameOf(settlement.to_user)}

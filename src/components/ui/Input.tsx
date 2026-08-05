@@ -6,15 +6,15 @@ interface Props extends TextInputProps {
 }
 
 export function Input({ label, error, className = '', ...rest }: Props) {
-  const borderColor = error ? 'border-danger-400' : 'border-gray-300 focus:border-primary-500';
+  const borderColor = error ? 'border-danger-400' : 'border-gray-300 dark:border-gray-600 focus:border-primary-500';
 
   return (
     <View>
       {label && (
-        <Text className="text-sm font-medium text-gray-700 mb-1">{label}</Text>
+        <Text className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{label}</Text>
       )}
       <TextInput
-        className={`border ${borderColor} rounded-xl px-4 py-3 text-base text-gray-900 bg-gray-50 ${className}`}
+        className={`border ${borderColor} rounded-xl px-4 py-3 text-base text-gray-900 dark:text-gray-50 bg-gray-50 dark:bg-gray-950 ${className}`}
         placeholderTextColor="#9ca3af"
         {...rest}
       />

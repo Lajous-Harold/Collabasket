@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { confirm, notifyError } from '../../../../src/utils/confirm';
 import {
@@ -11,6 +17,8 @@ import {
 import {
   useGroupLists,
   useCreateGroupList,
+  useRenameGroupList,
+  useDeleteGroupList,
 } from '../../../../src/hooks/useGroupLists';
 import { useListViews } from '../../../../src/hooks/useListViews';
 import { useShareInvitation } from '../../../../src/hooks/useInvitations';
@@ -23,15 +31,24 @@ import { EmptyState } from '../../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../../src/components/ui/LoadingState';
 import { FormModal } from '../../../../src/components/ui/FormModal';
 import { NicknameModal } from '../../../../src/components/ui/NicknameModal';
+import { useNavColors } from '../../../../src/lib/theme';
 
 export default function GroupDetailScreen() {
+  const nav = useNavColors();
   const { groupId, groupName } = useLocalSearchParams<{
     groupId: string;
     groupName: string;
   }>();
-  const { data: lists, isLoading: listsLoading } = useGroupLists(groupId);
+  const {
+    data: lists,
+    isLoading: listsLoading,
+    refetch: refetchLists,
+    isRefetching: listsRefetching,
+  } = useGroupLists(groupId);
   const { data: members } = useGroupMembers(groupId);
   const createList = useCreateGroupList();
+  const renameList = useRenameGroupList();
+  const deleteList = useDeleteGroupList();
   const deleteGroup = useDeleteGroup();
   const leaveGroup = useLeaveGroup();
   const { shareInvitation, isPending: isSharing } = useShareInvitation();
@@ -44,18 +61,47 @@ export default function GroupDetailScreen() {
   const myRole = myMembership?.role;
   const isAdminOrOwner = myRole === 'owner' || myRole === 'admin';
 
-  const [showModal, setShowModal] = useState(false);
+  const [listModal, setListModal] = useState<
+    { kind: 'closed' } | { kind: 'create' } | { kind: 'rename'; listId: string }
+  >({ kind: 'closed' });
   const [newListName, setNewListName] = useState('');
   const [nicknameMember, setNicknameMember] = useState<GroupMember | null>(null);
 
-  const handleCreateList = async () => {
+  const closeListModal = () => {
+    setListModal({ kind: 'closed' });
+    setNewListName('');
+  };
+
+  const handleListSubmit = async () => {
     const name = newListName.trim();
-    if (!name) return;
+    if (!name || listModal.kind === 'closed') return;
 
     try {
-      await createList.mutateAsync({ name, groupId });
-      setNewListName('');
-      setShowModal(false);
+      if (listModal.kind === 'create') {
+        await createList.mutateAsync({ name, groupId });
+      } else {
+        await renameList.mutateAsync({
+          listId: listModal.listId,
+          name,
+          groupId,
+        });
+      }
+      closeListModal();
+    } catch (e: any) {
+      notifyError(e.message);
+    }
+  };
+
+  const handleDeleteList = async (listId: string, listName: string) => {
+    const ok = await confirm({
+      title: 'Supprimer la liste',
+      message: `Supprimer "${listName}" et tous ses articles ?`,
+      confirmLabel: 'Supprimer',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteList.mutateAsync({ listId, groupId });
     } catch (e: any) {
       notifyError(e.message);
     }
@@ -110,13 +156,15 @@ export default function GroupDetailScreen() {
         options={{
           headerShown: true,
           title: groupName || 'Groupe',
-          headerTintColor: '#0d9488',
+          headerTintColor: nav.tint,
+          headerStyle: { backgroundColor: nav.background },
+          headerTitleStyle: { color: nav.text },
         }}
       />
 
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950">
         {/* Bandeau membres */}
-        <View className="bg-white px-4 py-3 border-b border-gray-100">
+        <View className="bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
           <Text className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">
             Membres ({members?.length ?? 0})
           </Text>
@@ -128,8 +176,8 @@ export default function GroupDetailScreen() {
                   key={m.id}
                   className={`rounded-full px-3 py-1 ${
                     isMe
-                      ? 'bg-primary-100 border border-primary-200'
-                      : 'bg-primary-50'
+                      ? 'bg-primary-100 dark:bg-primary-900 border border-primary-200 dark:border-primary-800'
+                      : 'bg-primary-50 dark:bg-primary-950'
                   }`}
                   activeOpacity={isMe ? 0.6 : 1}
                   onPress={() => {
@@ -137,7 +185,7 @@ export default function GroupDetailScreen() {
                   }}
                   disabled={!isMe}
                 >
-                  <Text className="text-xs text-primary-700">
+                  <Text className="text-xs text-primary-700 dark:text-primary-300">
                     {m.display_name}
                     {isMe ? ' (vous)' : ''}
                   </Text>
@@ -198,7 +246,7 @@ export default function GroupDetailScreen() {
             >
               <Button
                 title="+ Nouvelle liste"
-                onPress={() => setShowModal(true)}
+                onPress={() => setListModal({ kind: 'create' })}
               />
             </EmptyState>
           ) : (
@@ -206,6 +254,12 @@ export default function GroupDetailScreen() {
               data={lists}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ padding: 16, gap: 12 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={listsRefetching}
+                  onRefresh={() => refetchLists()}
+                />
+              }
               renderItem={({ item }) => (
                 <Card
                   onPress={() =>
@@ -224,7 +278,7 @@ export default function GroupDetailScreen() {
                     <View className="flex-1 flex-row items-center gap-2">
                       <Badge visible={hasNewChanges(item.id, item.updated_at)} />
                       <View>
-                        <Text className="text-base font-semibold text-gray-800">
+                        <Text className="text-base font-semibold text-gray-800 dark:text-gray-100">
                           {item.name}
                         </Text>
                         <Text className="text-xs text-gray-400 mt-1">
@@ -235,6 +289,25 @@ export default function GroupDetailScreen() {
                         </Text>
                       </View>
                     </View>
+                    <View className="flex-row gap-2">
+                      <Button
+                        title="✎"
+                        variant="outline"
+                        size="sm"
+                        onPress={() => {
+                          setNewListName(item.name);
+                          setListModal({ kind: 'rename', listId: item.id });
+                        }}
+                      />
+                      {isAdminOrOwner && (
+                        <Button
+                          title="Suppr."
+                          variant="danger"
+                          size="sm"
+                          onPress={() => handleDeleteList(item.id, item.name)}
+                        />
+                      )}
+                    </View>
                   </View>
                 </Card>
               )}
@@ -242,7 +315,7 @@ export default function GroupDetailScreen() {
                 <View className="pt-2 pb-2">
                   <Button
                     title="+ Nouvelle liste"
-                    onPress={() => setShowModal(true)}
+                    onPress={() => setListModal({ kind: 'create' })}
                   />
                 </View>
               }
@@ -251,7 +324,7 @@ export default function GroupDetailScreen() {
         </View>
 
         {/* Actions groupe */}
-        <View className="px-4 pb-6 pt-3 border-t border-gray-100">
+        <View className="px-4 pb-6 pt-3 border-t border-gray-100 dark:border-gray-800">
           {myRole === 'owner' ? (
             <Button
               title="Supprimer le groupe"
@@ -273,18 +346,20 @@ export default function GroupDetailScreen() {
       </View>
 
       <FormModal
-        visible={showModal}
-        title="Nouvelle liste de groupe"
+        visible={listModal.kind !== 'closed'}
+        title={
+          listModal.kind === 'rename'
+            ? 'Renommer la liste'
+            : 'Nouvelle liste de groupe'
+        }
         label="Nom de la liste"
         placeholder="Ex : Courses hebdo"
         value={newListName}
         onChangeText={setNewListName}
-        onSubmit={handleCreateList}
-        onCancel={() => {
-          setShowModal(false);
-          setNewListName('');
-        }}
-        loading={createList.isPending}
+        onSubmit={handleListSubmit}
+        onCancel={closeListModal}
+        submitLabel={listModal.kind === 'rename' ? 'Renommer' : 'Créer'}
+        loading={createList.isPending || renameList.isPending}
       />
 
       <NicknameModal

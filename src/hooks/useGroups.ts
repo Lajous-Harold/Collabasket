@@ -78,6 +78,23 @@ export function useCreateGroup() {
   });
 }
 
+export function useRenameGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ groupId, name }: { groupId: string; name: string }) => {
+      const { error } = await supabase
+        .from('groups')
+        .update({ name })
+        .eq('id', groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+}
+
 export function useDeleteGroup() {
   const queryClient = useQueryClient();
 

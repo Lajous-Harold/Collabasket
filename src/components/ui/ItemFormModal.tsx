@@ -71,7 +71,7 @@ function StorageButton({ label, selected, onPress, disabled }: StorageButtonProp
   const baseStyles = 'items-center justify-center px-4 py-2 rounded-lg border';
   const selectedStyles = 'bg-primary-600 border-primary-600 active:bg-primary-700';
   const unselectedStyles = 'bg-transparent border-primary-600 active:bg-primary-50';
-  const textStyles = selected ? 'text-white' : 'text-primary-600';
+  const textStyles = selected ? 'text-white' : 'text-primary-600 dark:text-primary-400';
 
   return (
     <TouchableOpacity
@@ -214,9 +214,9 @@ export function ItemFormModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center items-center bg-black/50"
       >
-        <View className="bg-white w-full h-full md:h-auto md:max-h-[90%] md:max-w-[500px] md:rounded-2xl md:my-8 overflow-hidden">
-          <View className="px-6 pt-6 pb-4 border-b border-gray-100">
-            <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+        <View className="bg-white dark:bg-gray-900 w-full h-full md:h-auto md:max-h-[90%] md:max-w-[500px] md:rounded-2xl md:my-8 overflow-hidden">
+          <View className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+            <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100">{title}</Text>
           </View>
 
           <ScrollView
@@ -236,19 +236,19 @@ export function ItemFormModal({
                 returnKeyType="next"
               />
               {showSuggestions && filteredSuggestions.length > 0 && (
-                <View className="mt-2 border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+                <View className="mt-2 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-950 overflow-hidden">
                   {filteredSuggestions.map((suggestion, index) => (
                     <TouchableOpacity
                       key={`${suggestion.name}-${index}`}
                       onPress={() => handleSelectSuggestion(suggestion)}
                       activeOpacity={0.6}
-                      className={`px-4 py-3 ${index < filteredSuggestions.length - 1 ? 'border-b border-gray-200' : ''}`}
+                      className={`px-4 py-3 ${index < filteredSuggestions.length - 1 ? 'border-b border-gray-200 dark:border-gray-700' : ''}`}
                     >
-                      <Text className="text-sm font-medium text-gray-800">
+                      <Text className="text-sm font-medium text-gray-800 dark:text-gray-100">
                         {suggestion.name}
                       </Text>
                       {suggestion.unit ? (
-                        <Text className="text-xs text-gray-500 mt-0.5">
+                        <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                           {suggestion.unit}
                         </Text>
                       ) : null}
@@ -297,7 +297,7 @@ export function ItemFormModal({
                   disabled={loading}
                 />
               ) : (
-                <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl opacity-50">
+                <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-xl opacity-50">
                   <Text className="text-base text-gray-400">
                     {categories.find((c) => c.id === categoryId)?.name ?? 'Sans catégorie'}
                   </Text>
@@ -307,7 +307,7 @@ export function ItemFormModal({
 
             {/* Storage location */}
             <View className="mt-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
+              <Text className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                 Lieu de stockage
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -362,7 +362,7 @@ export function ItemFormModal({
           </ScrollView>
 
           {/* Boutons en bas */}
-          <View className="px-6 py-4 border-t border-gray-100 gap-3">
+          <View className="px-6 py-4 border-t border-gray-100 dark:border-gray-800 gap-3">
             {onDelete && (
               <Button
                 title="Supprimer l'article"

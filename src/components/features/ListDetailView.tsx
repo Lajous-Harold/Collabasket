@@ -306,7 +306,7 @@ export function ListDetailView({ listId, groupId }: Props) {
 
     if (entry.kind === 'cat-header') {
       return (
-        <Text className="text-xs font-semibold text-primary-700 uppercase tracking-wide mt-4 mb-1 px-1">
+        <Text className="text-xs font-semibold text-primary-700 dark:text-primary-300 uppercase tracking-wide mt-4 mb-1 px-1">
           {entry.name}
         </Text>
       );
@@ -327,7 +327,7 @@ export function ListDetailView({ listId, groupId }: Props) {
     <>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 bg-gray-50"
+        className="flex-1 bg-gray-50 dark:bg-gray-950"
       >
         {isLoading ? (
           <LoadingState />
@@ -360,7 +360,7 @@ export function ListDetailView({ listId, groupId }: Props) {
         )}
 
         {/* Barre du bas */}
-        <View className="bg-white border-t border-gray-100">
+        <View className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
           {showFilters && (
             <View className="px-4 pt-3 pb-2 gap-2">
               <Input
@@ -371,9 +371,9 @@ export function ListDetailView({ listId, groupId }: Props) {
               <View className="flex-row items-center gap-2 flex-wrap">
                 <TouchableOpacity
                   onPress={cycleSortBy}
-                  className="px-3 py-1.5 rounded-lg bg-primary-50 border border-primary-200"
+                  className="px-3 py-1.5 rounded-lg bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-800"
                 >
-                  <Text className="text-xs text-primary-700 font-medium">
+                  <Text className="text-xs text-primary-700 dark:text-primary-300 font-medium">
                     Tri : {SORT_LABELS[sortBy]}
                   </Text>
                 </TouchableOpacity>
@@ -382,12 +382,12 @@ export function ListDetailView({ listId, groupId }: Props) {
                   className={`px-3 py-1.5 rounded-lg border ${
                     groupedView
                       ? 'bg-primary-600 border-primary-600'
-                      : 'bg-transparent border-gray-300'
+                      : 'bg-transparent border-gray-300 dark:border-gray-600'
                   }`}
                 >
                   <Text
                     className={`text-xs font-medium ${
-                      groupedView ? 'text-white' : 'text-gray-600'
+                      groupedView ? 'text-white' : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     Par catégorie
@@ -400,12 +400,12 @@ export function ListDetailView({ listId, groupId }: Props) {
                     className={`px-3 py-1.5 rounded-lg border ${
                       filterLocation === opt.value
                         ? 'bg-primary-600 border-primary-600'
-                        : 'bg-transparent border-gray-300'
+                        : 'bg-transparent border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     <Text
                       className={`text-xs font-medium ${
-                        filterLocation === opt.value ? 'text-white' : 'text-gray-600'
+                        filterLocation === opt.value ? 'text-white' : 'text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       {opt.label}
@@ -442,8 +442,8 @@ export function ListDetailView({ listId, groupId }: Props) {
               onPress={() => setShowFilters((v) => !v)}
               className={`w-10 h-10 items-center justify-center rounded-xl border ${
                 showFilters || filtersActive || groupedView
-                  ? 'border-primary-600 bg-primary-50'
-                  : 'border-gray-200'
+                  ? 'border-primary-600 bg-primary-50 dark:bg-primary-950'
+                  : 'border-gray-200 dark:border-gray-700'
               }`}
             >
               <Text className="text-base">⊞</Text>

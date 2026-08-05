@@ -71,14 +71,14 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      className="flex-1 bg-white dark:bg-gray-900"
     >
       <View className="flex-1 justify-center px-8">
         <View className="items-center mb-12">
-          <Text className="text-4xl font-bold text-primary-600">
+          <Text className="text-4xl font-bold text-primary-600 dark:text-primary-400">
             Collabasket
           </Text>
-          <Text className="text-base text-gray-500 mt-2">
+          <Text className="text-base text-gray-500 dark:text-gray-400 mt-2">
             Vos courses, ensemble.
           </Text>
         </View>
@@ -106,11 +106,11 @@ export default function LoginScreen() {
 
         {/* Divider */}
         <View className="flex-row items-center my-6">
-          <View className="flex-1 h-px bg-gray-200" />
+          <View className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
           <Text className="mx-3 text-xs text-gray-400">
             ou continuer avec
           </Text>
-          <View className="flex-1 h-px bg-gray-200" />
+          <View className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
         </View>
 
         {/* OAuth */}

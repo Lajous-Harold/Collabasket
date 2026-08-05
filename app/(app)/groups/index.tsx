@@ -1,11 +1,18 @@
 import { useState } from 'react';
-import { View, Text, FlatList } from 'react-native';
+import { View, Text, FlatList, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMyGroups, useCreateGroup, useDeleteGroup, useLeaveGroup } from '../../../src/hooks/useGroups';
+import {
+  useMyGroups,
+  useCreateGroup,
+  useDeleteGroup,
+  useLeaveGroup,
+  useRenameGroup,
+} from '../../../src/hooks/useGroups';
 import { Button } from '../../../src/components/ui/Button';
 import { Card } from '../../../src/components/ui/Card';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { LoadingState } from '../../../src/components/ui/LoadingState';
+import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { FormModal } from '../../../src/components/ui/FormModal';
 import { confirm, notifyError } from '../../../src/utils/confirm';
 
@@ -15,26 +22,41 @@ const ROLE_LABELS: Record<string, string> = {
   member: 'Membre',
 };
 
+type ModalState =
+  | { kind: 'closed' }
+  | { kind: 'create' }
+  | { kind: 'rename'; groupId: string };
+
 export default function GroupsScreen() {
-  const { data: groups, isLoading } = useMyGroups();
+  const { data: groups, isLoading, isError, refetch, isRefetching } =
+    useMyGroups();
   const createGroup = useCreateGroup();
   const deleteGroup = useDeleteGroup();
   const leaveGroup = useLeaveGroup();
+  const renameGroup = useRenameGroup();
   const router = useRouter();
 
-  const [showModal, setShowModal] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
+  const [modal, setModal] = useState<ModalState>({ kind: 'closed' });
+  const [nameInput, setNameInput] = useState('');
 
-  const handleCreate = async () => {
-    const name = newGroupName.trim();
-    if (!name) return;
+  const closeModal = () => {
+    setModal({ kind: 'closed' });
+    setNameInput('');
+  };
+
+  const handleSubmit = async () => {
+    const name = nameInput.trim();
+    if (!name || modal.kind === 'closed') return;
 
     try {
-      await createGroup.mutateAsync({ name });
-      setNewGroupName('');
-      setShowModal(false);
-    } catch (e: any) {
-      notifyError(e.message);
+      if (modal.kind === 'create') {
+        await createGroup.mutateAsync({ name });
+      } else {
+        await renameGroup.mutateAsync({ groupId: modal.groupId, name });
+      }
+      closeModal();
+    } catch (e: unknown) {
+      notifyError(e instanceof Error ? e.message : 'Erreur');
     }
   };
 
@@ -48,8 +70,8 @@ export default function GroupsScreen() {
     if (!ok) return;
     try {
       await deleteGroup.mutateAsync(groupId);
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e: unknown) {
+      notifyError(e instanceof Error ? e.message : 'Erreur');
     }
   };
 
@@ -63,22 +85,27 @@ export default function GroupsScreen() {
     if (!ok) return;
     try {
       await leaveGroup.mutateAsync(membershipId);
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e: unknown) {
+      notifyError(e instanceof Error ? e.message : 'Erreur');
     }
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950">
       {isLoading ? (
         <LoadingState />
+      ) : isError && !groups ? (
+        <ErrorState onRetry={() => refetch()} />
       ) : !groups?.length ? (
         <EmptyState
           icon="👥"
           title="Aucun groupe"
           subtitle="Créez un groupe pour partager des listes avec vos proches."
         >
-          <Button title="+ Créer un groupe" onPress={() => setShowModal(true)} />
+          <Button
+            title="+ Créer un groupe"
+            onPress={() => setModal({ kind: 'create' })}
+          />
         </EmptyState>
       ) : (
         <>
@@ -86,6 +113,12 @@ export default function GroupsScreen() {
             data={groups}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ padding: 16, gap: 12 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={() => refetch()}
+              />
+            }
             renderItem={({ item }) => (
               <Card
                 onPress={() =>
@@ -97,28 +130,41 @@ export default function GroupsScreen() {
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1">
-                    <Text className="text-base font-semibold text-gray-800">
+                    <Text className="text-base font-semibold text-gray-800 dark:text-gray-100">
                       {item.name}
                     </Text>
-                    <Text className="text-xs text-primary-600 mt-1">
+                    <Text className="text-xs text-primary-600 dark:text-primary-400 mt-1">
                       {ROLE_LABELS[item.role] ?? item.role}
                     </Text>
                   </View>
-                  {item.role === 'owner' ? (
-                    <Button
-                      title="Suppr."
-                      variant="danger"
-                      size="sm"
-                      onPress={() => handleDelete(item.id, item.name)}
-                    />
-                  ) : (
-                    <Button
-                      title="Quitter"
-                      variant="outline"
-                      size="sm"
-                      onPress={() => handleLeave(item.membershipId, item.name)}
-                    />
-                  )}
+                  <View className="flex-row gap-2">
+                    {(item.role === 'owner' || item.role === 'admin') && (
+                      <Button
+                        title="✎"
+                        variant="outline"
+                        size="sm"
+                        onPress={() => {
+                          setNameInput(item.name);
+                          setModal({ kind: 'rename', groupId: item.id });
+                        }}
+                      />
+                    )}
+                    {item.role === 'owner' ? (
+                      <Button
+                        title="Suppr."
+                        variant="danger"
+                        size="sm"
+                        onPress={() => handleDelete(item.id, item.name)}
+                      />
+                    ) : (
+                      <Button
+                        title="Quitter"
+                        variant="outline"
+                        size="sm"
+                        onPress={() => handleLeave(item.membershipId, item.name)}
+                      />
+                    )}
+                  </View>
                 </View>
               </Card>
             )}
@@ -126,25 +172,23 @@ export default function GroupsScreen() {
           <View className="px-4 pb-6">
             <Button
               title="+ Créer un groupe"
-              onPress={() => setShowModal(true)}
+              onPress={() => setModal({ kind: 'create' })}
             />
           </View>
         </>
       )}
 
       <FormModal
-        visible={showModal}
-        title="Nouveau groupe"
+        visible={modal.kind !== 'closed'}
+        title={modal.kind === 'rename' ? 'Renommer le groupe' : 'Nouveau groupe'}
         label="Nom du groupe"
         placeholder="Ex : Famille, Coloc..."
-        value={newGroupName}
-        onChangeText={setNewGroupName}
-        onSubmit={handleCreate}
-        onCancel={() => {
-          setShowModal(false);
-          setNewGroupName('');
-        }}
-        loading={createGroup.isPending}
+        value={nameInput}
+        onChangeText={setNameInput}
+        onSubmit={handleSubmit}
+        onCancel={closeModal}
+        submitLabel={modal.kind === 'rename' ? 'Renommer' : 'Créer'}
+        loading={createGroup.isPending || renameGroup.isPending}
       />
     </View>
   );

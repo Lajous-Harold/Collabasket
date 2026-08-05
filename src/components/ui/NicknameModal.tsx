@@ -44,8 +44,8 @@ export function NicknameModal({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 justify-center items-center bg-black/50 px-8"
       >
-        <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-4">
+        <View className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm">
+          <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
             Modifier le surnom
           </Text>
           <Input
@@ -57,7 +57,7 @@ export function NicknameModal({
             returnKeyType="done"
             onSubmitEditing={handleSubmit}
           />
-          <Text className="text-xs text-gray-500 mt-2">
+          <Text className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Laissez vide pour utiliser &laquo;&nbsp;{defaultDisplayName}&nbsp;&raquo;.
           </Text>
 

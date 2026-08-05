@@ -1,7 +1,9 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { ListDetailView } from '../../../../src/components/features/ListDetailView';
+import { useNavColors } from '../../../../src/lib/theme';
 
 export default function PersonalListDetailScreen() {
+  const nav = useNavColors();
   const { listId, listName } = useLocalSearchParams<{
     listId: string;
     listName: string;
@@ -13,7 +15,9 @@ export default function PersonalListDetailScreen() {
         options={{
           headerShown: true,
           title: listName || 'Liste',
-          headerTintColor: '#0d9488',
+          headerTintColor: nav.tint,
+          headerStyle: { backgroundColor: nav.background },
+          headerTitleStyle: { color: nav.text },
         }}
       />
       <ListDetailView listId={listId} listName={listName} />

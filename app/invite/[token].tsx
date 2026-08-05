@@ -31,12 +31,12 @@ export default function AcceptInvitationScreen() {
 
   if (!user) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-8">
+      <View className="flex-1 bg-gray-50 dark:bg-gray-950 items-center justify-center px-8">
         <Card className="w-full">
-          <Text className="text-lg font-semibold text-gray-800 text-center mb-2">
+          <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-2">
             Invitation Collabasket
           </Text>
-          <Text className="text-sm text-gray-500 text-center mb-6">
+          <Text className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
             Connectez-vous pour accepter cette invitation.
           </Text>
           <Button
@@ -53,12 +53,12 @@ export default function AcceptInvitationScreen() {
   }
 
   return (
-    <View className="flex-1 bg-gray-50 items-center justify-center px-8">
+    <View className="flex-1 bg-gray-50 dark:bg-gray-950 items-center justify-center px-8">
       <Card className="w-full">
-        <Text className="text-lg font-semibold text-gray-800 text-center mb-2">
+        <Text className="text-lg font-semibold text-gray-800 dark:text-gray-100 text-center mb-2">
           Invitation Collabasket
         </Text>
-        <Text className="text-sm text-gray-500 text-center mb-6">
+        <Text className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
           Vous avez été invité à rejoindre un groupe.
         </Text>
         <View className="gap-3">
