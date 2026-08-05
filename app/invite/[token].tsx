@@ -6,6 +6,7 @@ import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
 import { LoadingState } from '../../src/components/ui/LoadingState';
 import { notifyError, notifyInfo } from '../../src/utils/confirm';
+import { setPendingInviteToken } from '../../src/stores/pendingInvite';
 
 export default function AcceptInvitationScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
@@ -40,7 +41,11 @@ export default function AcceptInvitationScreen() {
           </Text>
           <Button
             title="Se connecter"
-            onPress={() => router.replace('/(auth)/login')}
+            onPress={async () => {
+              // Memorise le token pour rejouer l'invitation apres l'auth
+              if (token) await setPendingInviteToken(token);
+              router.replace('/(auth)/login');
+            }}
           />
         </Card>
       </View>

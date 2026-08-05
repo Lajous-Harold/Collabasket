@@ -6,6 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { View, ActivityIndicator } from 'react-native';
 import { queryClient } from '../src/lib/queryClient';
 import { useAuthStore } from '../src/stores/authStore';
+import { consumePendingInviteToken } from '../src/stores/pendingInvite';
 
 // Bootstrap auth (getSession + subscription onAuthStateChange) au
 // chargement du module. Idempotent : initPromise dans authStore
@@ -32,11 +33,22 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    // La route d'invitation doit rester accessible sans session : c'est
+    // le point d'entree des nouveaux utilisateurs via deep-link.
+    const inInviteRoute = segments[0] === 'invite';
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !inInviteRoute) {
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      router.replace('/(app)');
+      // Si un invite non connecte avait ouvert un lien d'invitation,
+      // on rejoue l'invitation apres l'authentification.
+      consumePendingInviteToken().then((token) => {
+        if (token) {
+          router.replace(`/invite/${token}`);
+        } else {
+          router.replace('/(app)');
+        }
+      });
     }
   }, [session, isLoading, segments, router]);
 

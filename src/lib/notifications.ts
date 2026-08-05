@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { supabase } from './supabase';
 
 // Configure le comportement des notifications en avant-plan
@@ -78,6 +79,41 @@ export async function requestAndRegisterPushToken(userId: string): Promise<strin
 }
 
 /**
+ * Route l'utilisateur vers l'écran concerné par la notification.
+ * Payloads serveur (migrations 011/012) : { type, list_id?, group_id? }.
+ */
+function navigateFromNotification(data: Record<string, unknown>): void {
+  const type = typeof data.type === 'string' ? data.type : null;
+  const listId = typeof data.list_id === 'string' ? data.list_id : null;
+  const groupId = typeof data.group_id === 'string' ? data.group_id : null;
+
+  try {
+    if (groupId && listId && type !== 'list_deleted') {
+      router.push(`/(app)/groups/${groupId}/lists/${listId}`);
+    } else if (groupId) {
+      // list_deleted : la liste n'existe plus, on ouvre le groupe
+      router.push(`/(app)/groups/${groupId}`);
+    } else if (listId) {
+      router.push(`/(app)/lists/${listId}`);
+    }
+  } catch (err) {
+    console.error('[Notifications] Navigation impossible:', err);
+  }
+}
+
+// Évite de traiter deux fois la même réponse (listener + cold start)
+let lastHandledResponseId: string | null = null;
+
+function handleResponse(response: Notifications.NotificationResponse): void {
+  const id = response.notification.request.identifier;
+  if (id === lastHandledResponseId) return;
+  lastHandledResponseId = id;
+
+  const data = response.notification.request.content.data as Record<string, unknown>;
+  navigateFromNotification(data);
+}
+
+/**
  * Installe les listeners de notifications.
  * Retourne une fonction de nettoyage à appeler au unmount.
  */
@@ -88,10 +124,13 @@ export function setupNotificationListeners(): () => void {
   });
 
   // Tap sur une notification (avant-plan ou arrière-plan)
-  const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as Record<string, unknown>;
-    console.log('[Notifications] Tap notification, data:', data);
-    // Navigation future : utiliser expo-router router.push() avec data.url ou data.screen
+  const responseSubscription =
+    Notifications.addNotificationResponseReceivedListener(handleResponse);
+
+  // App lancée depuis une notification (cold start) : le listener
+  // ci-dessus peut ne pas être encore monté au moment du tap.
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    if (response) handleResponse(response);
   });
 
   return () => {

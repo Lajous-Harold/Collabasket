@@ -13,7 +13,10 @@ import { notifyError, notifyInfo } from '../../src/utils/confirm';
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
-  const OTP_LENGTH = 8;
+  // Supabase envoie un code à 6 chiffres par défaut. Surchargez
+  // EXPO_PUBLIC_OTP_LENGTH uniquement si la config Supabase (Auth >
+  // Email > OTP length) a été modifiée.
+  const OTP_LENGTH = Number(process.env.EXPO_PUBLIC_OTP_LENGTH) || 6;
   const [code, setCode] = useState(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const { verifyOtp, signInWithOtp } = useAuth();
