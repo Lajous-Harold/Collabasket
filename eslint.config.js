@@ -1,9 +1,10 @@
-// ESLint flat config (v9+) — minimal pour faire passer la CI.
-// Aucune regle stricte activee : parsing TS/TSX uniquement.
-// Tightening progressif a faire dans une wave dediee.
+// ESLint flat config (v9+).
+// Règles réelles : typescript-eslint + react-hooks. Le typage fin
+// (no-unsafe-*) reste couvert par `tsc --noEmit` en CI.
 
 const tseslint = require('@typescript-eslint/eslint-plugin');
 const tsparser = require('@typescript-eslint/parser');
+const reactHooks = require('eslint-plugin-react-hooks');
 
 module.exports = [
   {
@@ -33,12 +34,32 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': tseslint,
+      'react-hooks': reactHooks,
     },
     rules: {
-      // Aucune regle activee pour l'instant.
-      // Le simple parsing TS via @typescript-eslint/parser permet de capter
-      // les erreurs de syntaxe. Les regles seront ajoutees progressivement
-      // dans une wave dediee pour eviter un mur d'erreurs sur le code existant.
+      // TypeScript
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/consistent-type-imports': [
+        'warn',
+        { fixStyle: 'inline-type-imports' },
+      ],
+
+      // React hooks
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      // JS de base
+      'no-var': 'error',
+      'prefer-const': 'error',
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
     },
   },
 ];

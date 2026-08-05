@@ -97,7 +97,7 @@ function MemberItem({
 
 export default function MembersScreen() {
   const nav = useNavColors();
-  const { groupId, groupName } = useLocalSearchParams<{
+  const { groupId } = useLocalSearchParams<{
     groupId: string;
     groupName: string;
   }>();

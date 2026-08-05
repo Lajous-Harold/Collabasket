@@ -22,8 +22,8 @@ export default function AcceptInvitationScreen() {
         `Vous avez rejoint le groupe "${result.group_name}".`,
       );
       router.replace('/(app)/groups');
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 

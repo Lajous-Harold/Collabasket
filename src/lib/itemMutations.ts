@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
 import { useAuthStore } from '../stores/authStore';
 import type { Database, StorageLocation } from '../types/database';

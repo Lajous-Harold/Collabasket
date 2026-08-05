@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, type ViewProps } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import type { ReactNode } from 'react';
 
 interface Props {

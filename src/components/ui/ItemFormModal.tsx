@@ -85,19 +85,6 @@ function StorageButton({ label, selected, onPress, disabled }: StorageButtonProp
   );
 }
 
-function parseNumber(text: string): number {
-  const normalized = text.replace(',', '.');
-  const parsed = Number.parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function parseOptionalNumber(text: string): number | null {
-  if (text.trim().length === 0) return null;
-  const normalized = text.replace(',', '.');
-  const parsed = Number.parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function numberToText(value: number): string {
   if (!Number.isFinite(value)) return '';
   return String(value);

@@ -48,8 +48,8 @@ export default function ProfileScreen() {
     if (!ok) return;
     try {
       await signOut();
-    } catch (e: any) {
-      notifyError(e?.message ?? 'Erreur lors de la deconnexion.');
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Erreur lors de la deconnexion.');
     }
   };
 
@@ -76,8 +76,8 @@ export default function ProfileScreen() {
     try {
       await updateProfile.mutateAsync({ display_name: displayName });
       setShowEditModal(false);
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 

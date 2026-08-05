@@ -87,8 +87,8 @@ export default function GroupDetailScreen() {
         });
       }
       closeListModal();
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -102,8 +102,8 @@ export default function GroupDetailScreen() {
     if (!ok) return;
     try {
       await deleteList.mutateAsync({ listId, groupId });
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -118,8 +118,8 @@ export default function GroupDetailScreen() {
     try {
       await deleteGroup.mutateAsync(groupId);
       router.back();
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -135,8 +135,8 @@ export default function GroupDetailScreen() {
     try {
       await leaveGroup.mutateAsync(myMembership.id);
       router.back();
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -145,8 +145,8 @@ export default function GroupDetailScreen() {
     try {
       await updateNickname.mutateAsync({ groupId, nickname });
       setNicknameMember(null);
-    } catch (e: any) {
-      notifyError(e.message);
+    } catch (e) {
+      notifyError(e instanceof Error ? e.message : 'Une erreur est survenue');
     }
   };
 
@@ -200,9 +200,11 @@ export default function GroupDetailScreen() {
               onPress={async () => {
                 try {
                   await shareInvitation(groupId, groupName || 'Groupe');
-                } catch (e: any) {
-                  if (e.message !== 'User did not share') {
-                    notifyError(e.message);
+                } catch (e) {
+                  const message =
+                    e instanceof Error ? e.message : 'Une erreur est survenue';
+                  if (message !== 'User did not share') {
+                    notifyError(message);
                   }
                 }
               }}
