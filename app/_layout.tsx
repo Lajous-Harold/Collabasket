@@ -2,11 +2,23 @@ import '../global.css';
 import { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { View, ActivityIndicator } from 'react-native';
-import { queryClient } from '../src/lib/queryClient';
+import {
+  queryClient,
+  asyncStoragePersister,
+  CACHE_MAX_AGE,
+} from '../src/lib/queryClient';
+import { setupOnlineManager } from '../src/lib/offline';
+import { setupItemMutationDefaults } from '../src/lib/itemMutations';
 import { useAuthStore } from '../src/stores/authStore';
 import { consumePendingInviteToken } from '../src/stores/pendingInvite';
+
+// Connectivité (NetInfo -> onlineManager) et defaults des mutations
+// offline : à installer avant le premier rendu et avant la
+// restauration du cache persisté.
+setupOnlineManager();
+setupItemMutationDefaults(queryClient);
 
 // Bootstrap auth (getSession + subscription onAuthStateChange) au
 // chargement du module. Idempotent : initPromise dans authStore
@@ -70,8 +82,25 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: asyncStoragePersister,
+        maxAge: CACHE_MAX_AGE,
+        // À incrémenter lors d'un changement incompatible de shape de
+        // cache (invalide le cache persisté des anciennes versions).
+        buster: 'v1',
+      }}
+      onSuccess={() => {
+        // Cache restauré : rejoue les mutations restées en pause
+        // (écritures faites hors ligne avant la fermeture de l'app),
+        // puis rafraîchit les données.
+        queryClient.resumePausedMutations().then(() => {
+          queryClient.invalidateQueries();
+        });
+      }}
+    >
       <RootLayoutNav />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

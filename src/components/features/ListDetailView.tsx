@@ -188,20 +188,22 @@ export function ListDetailView({ listId, groupId }: Props) {
 
   // ── Handlers ──────────────────────────────────────────────
 
-  const handleQuickAdd = async () => {
+  // Toutes les écritures d'articles sont optimistes (fire-and-forget) :
+  // l'UI répond immédiatement, y compris hors ligne où la mutation est
+  // mise en file et rejouée au retour du réseau. En cas d'échec réel,
+  // le rollback est automatique (itemMutations) + une alerte s'affiche.
+  const onItemMutationError = (e: Error) => notifyError(e.message);
+
+  const handleQuickAdd = () => {
     const name = newItemName.trim();
     if (!name) return;
-    try {
-      await addItem.mutateAsync({ listId, name });
-      setNewItemName('');
-    } catch (e: any) {
-      notifyError(e.message);
-    }
+    addItem.mutate({ listId, name }, { onError: onItemMutationError });
+    setNewItemName('');
   };
 
-  const handleDetailedAdd = async (values: ItemFormValues) => {
-    try {
-      await addItem.mutateAsync({
+  const handleDetailedAdd = (values: ItemFormValues) => {
+    addItem.mutate(
+      {
         listId,
         name: values.name,
         quantity: values.quantity,
@@ -210,17 +212,16 @@ export function ListDetailView({ listId, groupId }: Props) {
         storage_location: values.storage_location,
         notes: values.notes.length > 0 ? values.notes : null,
         price: values.price,
-      });
-      setModal({ kind: 'closed' });
-    } catch (e: any) {
-      notifyError(e.message);
-    }
+      },
+      { onError: onItemMutationError },
+    );
+    setModal({ kind: 'closed' });
   };
 
-  const handleEdit = async (values: ItemFormValues) => {
+  const handleEdit = (values: ItemFormValues) => {
     if (modal.kind !== 'edit') return;
-    try {
-      await updateItem.mutateAsync({
+    updateItem.mutate(
+      {
         itemId: modal.item.id,
         listId,
         name: values.name,
@@ -230,11 +231,10 @@ export function ListDetailView({ listId, groupId }: Props) {
         storage_location: values.storage_location,
         notes: values.notes.length > 0 ? values.notes : null,
         price: values.price,
-      });
-      setModal({ kind: 'closed' });
-    } catch (e: any) {
-      notifyError(e.message);
-    }
+      },
+      { onError: onItemMutationError },
+    );
+    setModal({ kind: 'closed' });
   };
 
   const handleDelete = async (item: ItemRow) => {
@@ -246,11 +246,10 @@ export function ListDetailView({ listId, groupId }: Props) {
     });
     if (!ok) return;
     setModal({ kind: 'closed' });
-    try {
-      await deleteItem.mutateAsync({ itemId: item.id, listId });
-    } catch (e: any) {
-      notifyError(e.message);
-    }
+    deleteItem.mutate(
+      { itemId: item.id, listId },
+      { onError: onItemMutationError },
+    );
   };
 
   const handleClearChecked = async () => {
@@ -261,11 +260,7 @@ export function ListDetailView({ listId, groupId }: Props) {
       destructive: true,
     });
     if (!ok) return;
-    try {
-      await clearChecked.mutateAsync({ listId });
-    } catch (e: any) {
-      notifyError(e.message);
-    }
+    clearChecked.mutate({ listId }, { onError: onItemMutationError });
   };
 
   const handleCreateCategory = async (name: string): Promise<CategoryRow> => {
@@ -302,11 +297,7 @@ export function ListDetailView({ listId, groupId }: Props) {
           <Text className="text-xs font-medium text-gray-400 uppercase tracking-wide">
             Fait ({entry.count})
           </Text>
-          <TouchableOpacity
-            onPress={handleClearChecked}
-            disabled={clearChecked.isPending}
-            className="px-2 py-1"
-          >
+          <TouchableOpacity onPress={handleClearChecked} className="px-2 py-1">
             <Text className="text-xs text-danger-600 font-medium">Tout vider</Text>
           </TouchableOpacity>
         </View>
@@ -439,7 +430,6 @@ export function ListDetailView({ listId, groupId }: Props) {
               title="Ajouter"
               size="md"
               onPress={handleQuickAdd}
-              loading={addItem.isPending}
               disabled={!newItemName.trim()}
             />
             <Button
@@ -477,7 +467,6 @@ export function ListDetailView({ listId, groupId }: Props) {
               }))
             : []
         }
-        loading={addItem.isPending || updateItem.isPending}
         onSubmit={modal.kind === 'edit' ? handleEdit : handleDetailedAdd}
         onCancel={() => setModal({ kind: 'closed' })}
         onDelete={

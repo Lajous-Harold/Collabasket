@@ -19,6 +19,11 @@ export function useRealtimeItems(listId: string) {
           filter: `list_id=eq.${listId}`,
         },
         () => {
+          // Ne pas refetch pendant qu'une mutation d'items est en vol
+          // (ou en file hors ligne) : le refetch écraserait l'état
+          // optimiste. L'invalidation finale est faite par onSettled
+          // (voir settleItems dans itemMutations.ts).
+          if (queryClient.isMutating({ mutationKey: ['items'] }) > 0) return;
           queryClient.invalidateQueries({ queryKey: ['items', listId] });
         },
       )

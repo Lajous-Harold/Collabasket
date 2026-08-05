@@ -1,8 +1,9 @@
 import { Tabs, useRouter } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRealtimeLists } from '../../src/hooks/useRealtimeLists';
 import { useRealtimeGroups } from '../../src/hooks/useRealtimeGroups';
 import { useNotifications } from '../../src/hooks/useNotifications';
+import { OfflineBanner } from '../../src/components/ui/OfflineBanner';
 
 export default function AppLayout() {
   const router = useRouter();
@@ -13,7 +14,9 @@ export default function AppLayout() {
   useNotifications();
 
   return (
-    <Tabs
+    <View className="flex-1">
+      <OfflineBanner />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#0d9488',
         tabBarInactiveTintColor: '#9ca3af',
@@ -74,6 +77,7 @@ export default function AppLayout() {
           ),
         }}
       />
-    </Tabs>
+      </Tabs>
+    </View>
   );
 }

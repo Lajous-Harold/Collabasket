@@ -1,10 +1,30 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import {
+  useQuery,
+  useMutation,
+  type MutateOptions,
+} from '@tanstack/react-query';
+import * as Crypto from 'expo-crypto';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from '../stores/authStore';
-import type { Database, StorageLocation } from '../types/database';
+import {
+  itemMutationKeys,
+  type AddItemVars,
+  type ToggleItemVars,
+  type UpdateItemVars,
+  type DeleteItemVars,
+  type ClearCheckedVars,
+  type ItemsMutationContext,
+} from '../lib/itemMutations';
+import type { Database } from '../types/database';
+
+export type { UpdateItemPatch } from '../lib/itemMutations';
 
 type ItemRow = Database['public']['Tables']['items']['Row'];
-type ItemUpdate = Database['public']['Tables']['items']['Update'];
+
+// Les mutationFn + updates optimistes vivent dans
+// src/lib/itemMutations.ts (setMutationDefaults) pour que les
+// mutations en pause hors ligne soient rejouables après un cold
+// start. Les hooks ci-dessous ne font que référencer la mutationKey.
 
 export function useListItems(listId: string) {
   return useQuery({
@@ -25,158 +45,52 @@ export function useListItems(listId: string) {
 }
 
 export function useAddItem() {
-  const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
+  const mutation = useMutation<ItemRow, Error, AddItemVars, ItemsMutationContext>(
+    { mutationKey: itemMutationKeys.add },
+  );
 
-  return useMutation({
-    mutationFn: async ({
-      listId,
-      name,
-      quantity,
-      unit,
-      category_id,
-      storage_location,
-      notes,
-      price,
-    }: {
-      listId: string;
-      name: string;
-      quantity?: number;
-      unit?: string | null;
-      category_id?: string | null;
-      storage_location?: StorageLocation | null;
-      notes?: string | null;
-      price?: number | null;
-    }) => {
-      const { data, error } = await supabase
-        .from('items')
-        .insert({
-          list_id: listId,
-          name,
-          quantity: quantity ?? 1,
-          unit: unit ?? null,
-          category_id: category_id ?? null,
-          added_by: user!.id,
-          storage_location: storage_location ?? null,
-          notes: notes ?? null,
-          price: price ?? null,
-        })
-        .select()
-        .single();
+  // Génère l'UUID côté client au moment du mutate : la ligne optimiste
+  // et la ligne serveur partagent le même id, donc un article ajouté
+  // hors ligne peut être coché/supprimé avant même d'être synchronisé.
+  const { mutate, mutateAsync } = mutation;
 
-      if (error) throw error;
-      return data as ItemRow;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['items', variables.listId] });
-    },
-  });
+  type AddOptions = MutateOptions<ItemRow, Error, AddItemVars, ItemsMutationContext>;
+
+  const mutateWithId = useCallback(
+    (vars: Omit<AddItemVars, 'id'>, options?: AddOptions) =>
+      mutate({ ...vars, id: Crypto.randomUUID() }, options),
+    [mutate],
+  );
+
+  const mutateAsyncWithId = useCallback(
+    (vars: Omit<AddItemVars, 'id'>, options?: AddOptions) =>
+      mutateAsync({ ...vars, id: Crypto.randomUUID() }, options),
+    [mutateAsync],
+  );
+
+  return { ...mutation, mutate: mutateWithId, mutateAsync: mutateAsyncWithId };
 }
 
 export function useToggleItem() {
-  const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
-
-  return useMutation({
-    mutationFn: async ({
-      item,
-    }: {
-      item: ItemRow;
-    }) => {
-      const newChecked = !item.is_checked;
-      const { error } = await supabase
-        .from('items')
-        .update({
-          is_checked: newChecked,
-          checked_by: newChecked ? user!.id : null,
-        })
-        .eq('id', item.id);
-
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['items', variables.item.list_id],
-      });
-    },
+  return useMutation<void, Error, ToggleItemVars, ItemsMutationContext>({
+    mutationKey: itemMutationKeys.toggle,
   });
 }
 
-export interface UpdateItemPatch {
-  name?: string;
-  quantity?: number;
-  unit?: string | null;
-  category_id?: string | null;
-  storage_location?: StorageLocation | null;
-  notes?: string | null;
-  price?: number | null;
-}
-
 export function useUpdateItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      itemId,
-      listId: _listId,
-      ...patch
-    }: { itemId: string; listId: string } & UpdateItemPatch) => {
-      const update: ItemUpdate = {};
-      if (patch.name !== undefined) update.name = patch.name;
-      if (patch.quantity !== undefined) update.quantity = patch.quantity;
-      if (patch.unit !== undefined) update.unit = patch.unit;
-      if (patch.category_id !== undefined) update.category_id = patch.category_id;
-      if (patch.storage_location !== undefined)
-        update.storage_location = patch.storage_location;
-      if (patch.notes !== undefined) update.notes = patch.notes;
-      if (patch.price !== undefined) update.price = patch.price;
-
-      const { data, error } = await supabase
-        .from('items')
-        .update(update)
-        .eq('id', itemId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as ItemRow;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['items', variables.listId] });
-    },
+  return useMutation<void, Error, UpdateItemVars, ItemsMutationContext>({
+    mutationKey: itemMutationKeys.update,
   });
 }
 
 export function useDeleteItem() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ itemId, listId }: { itemId: string; listId: string }) => {
-      const { error } = await supabase.from('items').delete().eq('id', itemId);
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['items', variables.listId],
-      });
-    },
+  return useMutation<void, Error, DeleteItemVars, ItemsMutationContext>({
+    mutationKey: itemMutationKeys.remove,
   });
 }
 
 export function useClearCheckedItems() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ listId }: { listId: string }) => {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('list_id', listId)
-        .eq('is_checked', true);
-      if (error) throw error;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['items', variables.listId] });
-    },
+  return useMutation<void, Error, ClearCheckedVars, ItemsMutationContext>({
+    mutationKey: itemMutationKeys.clearChecked,
   });
 }
